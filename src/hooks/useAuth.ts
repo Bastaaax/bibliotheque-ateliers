@@ -41,9 +41,8 @@ export function useAuth() {
         .select('*')
         .eq('id', session.user.id)
         .maybeSingle()
-      if (error) throw error
-      if (data) return data as Profile
-      // Profil absent (trigger non exécuté) : on le crée
+      if (!error && data) return data as Profile
+      // Erreur 406 / pas de ligne = profil absent ; on tente de le créer
       const newProfile = {
         id: session.user.id,
         email: session.user.email ?? '',
@@ -54,13 +53,12 @@ export function useAuth() {
       const { error: insertError } = await supabase
         .from('profiles')
         .insert(newProfile as Record<string, unknown>)
-      if (insertError) {
-        console.warn('Création du profil échouée (RLS ?):', insertError.message)
-        return null
-      }
-      return newProfile as Profile
+      if (!insertError) return newProfile as Profile
+      console.warn('Profil absent ou création échouée (RLS ?):', insertError.message)
+      return null
     },
     enabled: !!session?.user?.id,
+    retry: false,
   })
 
   const signIn = useMutation({
