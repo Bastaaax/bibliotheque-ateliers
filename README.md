@@ -55,3 +55,4 @@ Ouvre [http://localhost:5173](http://localhost:5173).
 ## Licence
 
 Projet privé / usage interne.
+# bibliotheque-ateliers
