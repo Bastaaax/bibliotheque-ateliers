@@ -36,13 +36,16 @@ export function useAuth() {
     queryKey: ['profile', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null
+      // .limit(1) + tableau évite le 406 (pas de .single() / .maybeSingle())
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
-        .maybeSingle()
-      if (!error && data) return data as Profile
-      // Erreur 406 / pas de ligne = profil absent ; on tente de le créer
+        .limit(1)
+      if (error) throw error
+      const existing = Array.isArray(data) && data.length > 0 ? data[0] : null
+      if (existing) return existing as Profile
+      // Profil absent : on le crée
       const newProfile = {
         id: session.user.id,
         email: session.user.email ?? '',
@@ -54,7 +57,7 @@ export function useAuth() {
         .from('profiles')
         .insert(newProfile as Record<string, unknown>)
       if (!insertError) return newProfile as Profile
-      console.warn('Profil absent ou création échouée (RLS ?):', insertError.message)
+      console.warn('Création du profil échouée (RLS ?):', insertError.message)
       return null
     },
     enabled: !!session?.user?.id,
