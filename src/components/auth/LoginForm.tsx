@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -24,6 +24,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>
 
 export function LoginForm() {
+  const navigate = useNavigate()
   const { signIn } = useAuth()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
@@ -38,6 +39,7 @@ export function LoginForm() {
     try {
       await signIn.mutateAsync({ email: values.email, password: values.password })
       toast({ title: 'Connexion réussie', description: 'Bienvenue !' })
+      navigate('/', { replace: true })
     } catch (err) {
       toast({
         title: 'Erreur de connexion',
