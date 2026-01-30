@@ -40,14 +40,14 @@ export function useAuth() {
       const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
       // Requête directe avec Accept: application/json pour éviter le 406 (PostgREST)
       const res = await fetch(
-        `${supabaseUrl}/rest/v1/profiles?id=eq.${session.user.id}&select=*`,
+        `${supabaseUrl}/rest/v1/profiles?select=*&id=eq.${encodeURIComponent(session.user.id)}`,
         {
           method: 'GET',
           headers: {
             apikey: supabaseKey,
             Authorization: `Bearer ${session.access_token}`,
             Accept: 'application/json',
-            'Content-Type': 'application/json',
+            'Accept-Profile': 'public',
           },
         }
       )
