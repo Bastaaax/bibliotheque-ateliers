@@ -38,7 +38,7 @@ export function useAuth() {
       if (!session?.user?.id) return null
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
       const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-      // Requête directe avec Accept: application/json pour éviter le 406 (PostgREST)
+      // Requête directe avec Accept: application/json (évite 406 PostgREST)
       const res = await fetch(
         `${supabaseUrl}/rest/v1/profiles?select=*&id=eq.${encodeURIComponent(session.user.id)}`,
         {
