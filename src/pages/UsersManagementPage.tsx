@@ -31,7 +31,7 @@ export default function UsersManagementPage() {
       const { error } = await supabase.from('invitations').insert({
         email: inviteEmail.trim(),
         role: 'contributor',
-      })
+      } as Record<string, unknown>)
       if (error) throw error
       toast({ title: 'Invitation envoyée', description: `Un email a été envoyé à ${inviteEmail}.` })
       setInviteEmail('')

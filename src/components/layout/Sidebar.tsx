@@ -3,14 +3,14 @@ import { Button } from '@/components/ui/button'
 import { FilterPanel } from '@/components/search/FilterPanel'
 import { LayoutGrid, List } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { WorkshopFilters } from '@/types'
+import type { WorkshopFilters, Tag } from '@/types'
 
 interface SidebarProps {
   filters: WorkshopFilters
   onFiltersChange: (filters: WorkshopFilters) => void
   viewMode: 'grid' | 'list'
   onViewModeChange: (mode: 'grid' | 'list') => void
-  tags: { id: string; name: string; color: string }[]
+  tags: Tag[]
   creators: { id: string; full_name: string | null }[]
   className?: string
 }
@@ -24,7 +24,7 @@ export function Sidebar({
   creators,
   className,
 }: SidebarProps) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed] = useState(false)
 
   return (
     <aside

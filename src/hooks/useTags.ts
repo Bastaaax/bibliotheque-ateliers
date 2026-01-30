@@ -21,7 +21,7 @@ export function useTags() {
     mutationFn: async (data: Omit<Tag, 'id' | 'created_at'>) => {
       const { data: tag, error } = await supabase
         .from('tags')
-        .insert(data)
+        .insert(data as Record<string, unknown>)
         .select()
         .single()
       if (error) throw error
@@ -36,7 +36,7 @@ export function useTags() {
     mutationFn: async ({ id, data }: { id: string; data: Partial<Tag> }) => {
       const { data: tag, error } = await supabase
         .from('tags')
-        .update(data)
+        .update(data as Record<string, unknown>)
         .eq('id', id)
         .select()
         .single()

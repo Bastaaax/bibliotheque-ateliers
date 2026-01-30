@@ -23,11 +23,12 @@ export function useWorkshops(filters?: WorkshopFilters) {
       if (filters?.search?.trim()) {
         const { data: searchResults } = await supabase.rpc('search_workshops', {
           search_query: filters.search.trim(),
-        })
-        if (searchResults && searchResults.length > 0) {
-          const ids = searchResults.map((r: { id: string }) => r.id)
+        } as { search_query: string })
+        const results = searchResults as { id: string }[] | null
+        if (results && results.length > 0) {
+          const ids = results.map((r) => r.id)
           query = query.in('id', ids)
-        } else if (searchResults && searchResults.length === 0) {
+        } else if (results && results.length === 0) {
           return []
         }
       }
@@ -37,8 +38,9 @@ export function useWorkshops(filters?: WorkshopFilters) {
           .from('workshop_tags')
           .select('workshop_id')
           .in('tag_id', filters.tagIds)
-        if (workshopIds && workshopIds.length > 0) {
-          const ids = [...new Set(workshopIds.map((wt) => wt.workshop_id))]
+        const rows = workshopIds as { workshop_id: string }[] | null
+        if (rows && rows.length > 0) {
+          const ids = [...new Set(rows.map((wt) => wt.workshop_id))]
           query = query.in('id', ids)
         } else {
           return []
@@ -92,7 +94,7 @@ export function useWorkshops(filters?: WorkshopFilters) {
         .insert({
           ...workshopData,
           creator_id: user.id,
-        })
+        } as Record<string, unknown>)
         .select()
         .single()
 
@@ -101,14 +103,14 @@ export function useWorkshops(filters?: WorkshopFilters) {
       if (tagIds.length > 0) {
         const { error: tagsError } = await supabase.from('workshop_tags').insert(
           tagIds.map((tagId) => ({
-            workshop_id: workshop.id,
+            workshop_id: (workshop as { id: string }).id,
             tag_id: tagId,
-          }))
+          })) as Record<string, unknown>[]
         )
         if (tagsError) throw tagsError
       }
 
-      return workshop as Workshop
+      return workshop as Workshop as Workshop
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workshops'] })
@@ -121,7 +123,7 @@ export function useWorkshops(filters?: WorkshopFilters) {
 
       const { data: workshop, error: workshopError } = await supabase
         .from('workshops')
-        .update(workshopData)
+        .update(workshopData as Record<string, unknown>)
         .eq('id', id)
         .select()
         .single()
@@ -134,7 +136,7 @@ export function useWorkshops(filters?: WorkshopFilters) {
           tagIds.map((tagId) => ({
             workshop_id: id,
             tag_id: tagId,
-          }))
+          })) as Record<string, unknown>[]
         )
         if (tagsError) throw tagsError
       }
@@ -185,10 +187,12 @@ export function useWorkshop(id: string | undefined) {
 
       if (error) throw error
 
+      const d = data as Record<string, unknown> | null
+      if (!d) throw new Error('Workshop not found')
       return {
-        ...data,
-        tags: Array.isArray(data?.tags)
-          ? (data.tags as { tag: unknown }[]).map((t) => t.tag).filter(Boolean)
+        ...d,
+        tags: Array.isArray(d?.tags)
+          ? (d.tags as { tag: unknown }[]).map((t) => t.tag).filter(Boolean)
           : [],
       } as Workshop
     },

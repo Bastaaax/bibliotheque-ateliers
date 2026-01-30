@@ -3,7 +3,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   Form,
   FormControl,
@@ -17,7 +16,6 @@ import { WorkshopEditor } from './WorkshopEditor'
 import { TagBadge } from '@/components/tags/TagBadge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Checkbox } from '@/components/ui/checkbox'
-import { cn } from '@/lib/utils'
 import type { WorkshopFormData } from '@/types'
 import type { Tag } from '@/types'
 import { Plus, X } from 'lucide-react'
@@ -105,6 +103,9 @@ export function WorkshopForm({
     const objectivesFiltered = objectives.filter(Boolean)
     await onSubmit({
       ...values,
+      duration_minutes: values.duration_minutes ?? undefined,
+      participants_min: values.participants_min ?? undefined,
+      participants_max: values.participants_max ?? undefined,
       materials: materialsFiltered,
       objectives: objectivesFiltered,
       tagIds: values.tagIds,
