@@ -70,7 +70,27 @@ export function useAuth() {
         .from('profiles')
         .insert(newProfile as Record<string, unknown>)
       if (!insertError) return newProfile as Profile
-      console.warn('Création du profil échouée (RLS ?):', insertError.message)
+      // Profil déjà existant (trigger ou autre) : on le récupère
+      if (insertError.message?.includes('duplicate key') || insertError.message?.includes('unique constraint')) {
+        const res2 = await fetch(
+          `${supabaseUrl}/rest/v1/profiles?select=*&id=eq.${encodeURIComponent(session.user.id)}`,
+          {
+            method: 'GET',
+            headers: {
+              apikey: supabaseKey,
+              Authorization: `Bearer ${session.access_token}`,
+              Accept: 'application/json',
+              'Accept-Profile': 'public',
+            },
+          }
+        )
+        if (res2.ok) {
+          const data2 = await res2.json()
+          const row = Array.isArray(data2) && data2.length > 0 ? data2[0] : null
+          if (row) return row as Profile
+        }
+      }
+      console.warn('Profil non disponible:', insertError.message)
       return null
     },
     enabled: !!session?.user?.id,
