@@ -36,13 +36,26 @@ export function useAuth() {
     queryKey: ['profile', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null
-      // .limit(1) + tableau évite le 406 (pas de .single() / .maybeSingle())
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .limit(1)
-      if (error) throw error
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+      // Requête directe avec Accept: application/json pour éviter le 406 (PostgREST)
+      const res = await fetch(
+        `${supabaseUrl}/rest/v1/profiles?id=eq.${session.user.id}&select=*`,
+        {
+          method: 'GET',
+          headers: {
+            apikey: supabaseKey,
+            Authorization: `Bearer ${session.access_token}`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+      if (!res.ok) {
+        if (res.status === 406) return null
+        throw new Error(`Profiles: ${res.status}`)
+      }
+      const data = await res.json()
       const existing = Array.isArray(data) && data.length > 0 ? data[0] : null
       if (existing) return existing as Profile
       // Profil absent : on le crée
