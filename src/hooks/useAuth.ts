@@ -74,7 +74,7 @@ export function useAuth() {
         return upserted[0] as Profile
       }
       if (upsertError) {
-        console.warn('Profil upsert échoué:', upsertError.message)
+        console.warn('Profil upsert échoué (RLS ? exécute supabase/fix-profiles-rls.sql):', upsertError.message)
       }
       return null
     },
