@@ -1,0 +1,451 @@
+PRD - Bibliothèque de Fiches Ateliers
+1. Vue d'ensemble du produit
+1.1 Vision
+Créer une plateforme collaborative centralisée pour gérer, organiser et partager des fiches d'ateliers de formation, avec des intégrations aux outils existants (Notion, Google Drive) et un système de tags avancé.
+1.2 Objectifs
+
+Centraliser toutes les fiches ateliers au même endroit
+Faciliter la découverte et la recherche d'ateliers via un système de tags
+Permettre la collaboration et la contribution d'autres formateurs
+Simplifier l'import depuis Notion et Google Drive
+Offrir une visualisation et édition directe des fiches
+
+1.3 Public cible
+
+Formateurs et animateurs d'ateliers (utilisateur principal)
+Contributeurs externes (accès limité pour ajouter leurs ateliers)
+
+2. Fonctionnalités principales
+2.1 Authentification et gestion des utilisateurs
+Priorité: P0
+
+Inscription/Connexion via email/password (Supabase Auth)
+Deux rôles:
+
+Admin: Accès complet (toi)
+Contributeur: Peut ajouter et éditer ses propres ateliers
+
+
+Gestion des invitations pour les contributeurs
+
+2.2 Intégrations externes
+Priorité: P0
+2.2.1 Connexion Notion
+
+OAuth avec Notion API
+Sélection de la base de données source
+Import initial des fiches
+Mapping automatique des propriétés Notion vers les champs de l'app
+Synchronisation manuelle (bouton "Sync")
+
+2.2.2 Connexion Google Drive
+
+OAuth avec Google Drive API
+Parcours des dossiers
+Sélection des fichiers à importer (PDF, DOCX, Google Docs)
+Extraction du contenu et métadonnées
+Import dans la base de données
+
+2.3 Gestion des fiches ateliers
+Priorité: P0
+2.3.1 Structure d'une fiche
+
+Titre (obligatoire)
+Description (texte riche)
+Contenu principal (éditeur markdown/texte riche)
+Type d'atelier (tag multiple)
+Type de stage (tag multiple)
+Date de création
+Date de dernière modification
+Créateur (lié au user)
+Durée estimée
+Nombre de participants (min/max)
+Matériel nécessaire (liste)
+Objectifs pédagogiques (liste)
+Fichiers attachés (PDF, images, etc.)
+Tags personnalisés (libre)
+
+2.3.2 Création/Edition de fiche
+
+Formulaire complet avec tous les champs
+Éditeur WYSIWYG pour le contenu
+Upload de fichiers (Supabase Storage)
+Auto-sauvegarde
+Prévisualisation en temps réel
+
+2.3.3 Visualisation de fiche
+
+Vue détaillée avec tous les champs
+Téléchargement des fichiers attachés
+Mode lecture optimisé
+Bouton "Éditer" (si permissions)
+Historique des modifications (bonus P1)
+
+2.4 Bibliothèque et recherche
+Priorité: P0
+2.4.1 Vue bibliothèque
+
+Affichage en grille/liste (toggle)
+Cards avec: titre, type d'atelier, tags principaux, créateur, date
+Pagination ou scroll infini
+
+2.4.2 Système de recherche et filtres
+
+Barre de recherche full-text (titre, description, contenu)
+Filtres multiples:
+
+Type d'atelier (checkbox multiple)
+Type de stage (checkbox multiple)
+Créateur (dropdown)
+Date (range picker)
+Durée (range)
+Nombre de participants (range)
+Tags personnalisés (autocomplete)
+
+
+Filtres combinables (AND/OR)
+Compteur de résultats
+Sauvegarde des filtres (P1)
+
+2.4.3 Tri
+
+Par date (plus récent/plus ancien)
+Par titre (A-Z)
+Par créateur
+Par popularité (P1)
+
+2.5 Gestion des tags
+Priorité: P0
+
+Création de tags à la volée lors de l'édition
+Gestion centralisée des tags (page admin):
+
+Liste de tous les tags
+Fusion de tags
+Suppression de tags
+Renommage
+
+
+Tags prédéfinis pour "Type d'atelier" et "Type de stage"
+Tags personnalisés libres
+Auto-complétion lors de l'ajout de tags
+
+2.6 Collaboration
+Priorité: P1
+
+Système d'invitations par email
+Les contributeurs voient tous les ateliers mais ne peuvent éditer que les leurs
+Commentaires sur les fiches (P1)
+Suggestions de modifications (P2)
+
+3. Architecture technique
+3.1 Stack technologique
+Frontend:
+
+React (Vite ou Next.js)
+TypeScript
+TailwindCSS pour le styling
+Shadcn/ui pour les composants
+TipTap ou Lexical pour l'éditeur riche
+React Query pour la gestion d'état et cache
+
+Backend:
+
+Supabase (PostgreSQL)
+Supabase Auth
+Supabase Storage
+Supabase Realtime (optionnel pour collaboration)
+
+Intégrations:
+
+Notion API (OAuth + REST API)
+Google Drive API (OAuth + REST API)
+
+3.2 Schéma de base de données (Supabase)
+sql-- Users (géré par Supabase Auth + table profiles)
+CREATE TABLE profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id),
+  email TEXT,
+  full_name TEXT,
+  role TEXT CHECK (role IN ('admin', 'contributor')),
+  avatar_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Workshops (fiches ateliers)
+CREATE TABLE workshops (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  description TEXT,
+  content TEXT,
+  duration_minutes INTEGER,
+  participants_min INTEGER,
+  participants_max INTEGER,
+  materials JSONB DEFAULT '[]',
+  objectives JSONB DEFAULT '[]',
+  creator_id UUID REFERENCES profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  source TEXT, -- 'manual', 'notion', 'gdrive'
+  source_id TEXT, -- ID from external source
+  source_url TEXT
+);
+
+-- Tags
+CREATE TABLE tags (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT UNIQUE NOT NULL,
+  category TEXT, -- 'workshop_type', 'stage_type', 'custom'
+  color TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Workshop_Tags (relation many-to-many)
+CREATE TABLE workshop_tags (
+  workshop_id UUID REFERENCES workshops(id) ON DELETE CASCADE,
+  tag_id UUID REFERENCES tags(id) ON DELETE CASCADE,
+  PRIMARY KEY (workshop_id, tag_id)
+);
+
+-- Attachments
+CREATE TABLE attachments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  workshop_id UUID REFERENCES workshops(id) ON DELETE CASCADE,
+  file_name TEXT NOT NULL,
+  file_path TEXT NOT NULL, -- Supabase Storage path
+  file_type TEXT,
+  file_size INTEGER,
+  uploaded_by UUID REFERENCES profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Integrations (connexions externes)
+CREATE TABLE integrations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES profiles(id),
+  type TEXT CHECK (type IN ('notion', 'gdrive')),
+  access_token TEXT,
+  refresh_token TEXT,
+  config JSONB, -- metadata specific to integration
+  last_sync TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Invitations
+CREATE TABLE invitations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL,
+  role TEXT CHECK (role IN ('contributor')),
+  invited_by UUID REFERENCES profiles(id),
+  token TEXT UNIQUE,
+  expires_at TIMESTAMPTZ,
+  accepted_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+3.3 Row Level Security (RLS)
+
+Profiles: users can read all, update only their own
+Workshops:
+
+All authenticated users can read all
+Users can insert/update/delete only their own workshops
+Admins can do everything
+
+
+Tags: All can read, only admins can modify
+Attachments: Follow workshop permissions
+
+4. Design et UX
+4.1 Charte graphique
+
+Couleur principale: #003a5d (bleu marine profond)
+Typographie:
+
+Titres: "Caveat Brush" (Google Fonts)
+Corps de texte: "Sarabun" (Google Fonts)
+
+
+Style: Moderne, épuré, professionnel mais chaleureux
+
+4.2 Pages principales
+4.2.1 Dashboard/Bibliothèque (page d'accueil)
+
+Header avec logo, search bar, bouton "Nouvel atelier", profil user
+Sidebar avec filtres
+Zone principale avec grille/liste d'ateliers
+Footer minimaliste
+
+4.2.2 Page détail d'atelier
+
+Header avec titre
+Métadonnées (tags, créateur, date, durée, participants)
+Contenu principal
+Section matériel et objectifs
+Fichiers attachés
+Actions (Éditer, Supprimer, Dupliquer)
+
+4.2.3 Page création/édition
+
+Formulaire en colonnes ou sections
+Prévisualisation côté
+Barre d'actions flottante (Sauvegarder, Annuler)
+
+4.2.4 Page intégrations
+
+Liste des connexions actives
+Boutons "Connecter Notion" / "Connecter Google Drive"
+Historique des syncs
+Configuration de chaque intégration
+
+4.2.5 Page gestion des tags (admin)
+
+Table avec tous les tags
+Actions: fusionner, renommer, supprimer
+Statistiques d'utilisation
+
+4.2.6 Page gestion des utilisateurs (admin)
+
+Liste des contributeurs
+Invitations en attente
+Formulaire d'invitation
+
+4.3 Composants UI clés
+
+Card atelier (avec image placeholder, tags colorés)
+Tag badge (coloré, cliquable pour filtrer)
+Éditeur riche (toolbar complète)
+Modal de confirmation
+Toasts pour feedback utilisateur
+Loading states et skeletons
+Empty states personnalisés
+
+5. User flows
+5.1 Import depuis Notion
+
+User clique "Connecter Notion"
+Authentification OAuth Notion
+Sélection de la database
+Mapping des champs (interface de correspondance)
+Preview des données à importer
+Confirmation import
+Processing + feedback
+Redirection vers bibliothèque avec nouveaux ateliers
+
+5.2 Création d'atelier manuel
+
+User clique "Nouvel atelier"
+Formulaire vierge
+Remplissage des champs
+Ajout de tags (autocomplete)
+Upload de fichiers
+Sauvegarde
+Redirection vers fiche créée
+
+5.3 Recherche et filtrage
+
+User arrive sur bibliothèque
+Tape dans search bar OU sélectionne filtres
+Résultats mis à jour en temps réel
+Click sur un atelier → page détail
+Retour avec filtres préservés
+
+5.4 Invitation contributeur
+
+Admin va dans "Utilisateurs"
+Click "Inviter"
+Entre email + rôle
+Email envoyé automatiquement
+Contributeur reçoit lien
+Inscription/connexion
+Accès à la plateforme
+
+6. Priorisation (MoSCoW)
+Must Have (MVP - P0)
+
+Authentification (Supabase Auth)
+CRUD ateliers complet
+Système de tags (création, ajout, filtrage)
+Recherche et filtres de base
+Vue bibliothèque
+Connexion Notion (import)
+Connexion Google Drive (import)
+Upload de fichiers
+Gestion des rôles (admin/contributor)
+
+Should Have (P1)
+
+Éditeur riche avancé
+Synchronisation auto Notion/GDrive
+Système d'invitations
+Gestion centralisée des tags
+Export d'ateliers (PDF, JSON)
+Duplication d'ateliers
+Historique des modifications
+
+Could Have (P2)
+
+Commentaires sur les fiches
+Favoris/bookmarks
+Collections/dossiers personnalisés
+Statistiques d'utilisation
+Mode sombre
+PWA/App mobile
+
+Won't Have (Hors scope)
+
+Messagerie interne
+Système de notation
+Workflow d'approbation complexe
+Analytics avancées
+
+7. Sécurité et permissions
+7.1 Matrice de permissions
+ActionAdminContributeurNon-authVoir tous les ateliers✅✅❌Créer atelier✅✅❌Éditer son atelier✅✅❌Éditer atelier d'autrui✅❌❌Supprimer son atelier✅✅❌Supprimer atelier d'autrui✅❌❌Gérer les tags✅❌❌Inviter utilisateurs✅❌❌Connecter intégrations✅✅❌
+7.2 Considérations
+
+Tokens OAuth stockés de manière sécurisée (Supabase vault)
+RLS Supabase activé sur toutes les tables
+Validation côté serveur (Supabase functions si nécessaire)
+Rate limiting sur les imports
+Sanitization des contenus riches (XSS prevention)
+
+8. Performance
+8.1 Optimisations prévues
+
+Lazy loading des images
+Pagination/infinite scroll
+Debounce sur la recherche
+Cache des résultats de recherche (React Query)
+Optimistic updates
+Compression des images uploadées
+CDN pour les assets statiques (Supabase Storage CDN)
+
+8.2 Métriques cibles
+
+Page load < 2s
+Time to interactive < 3s
+Search response < 500ms
+
+9. Déploiement
+9.1 Environnements
+
+Dev: Local + Supabase dev project
+Staging: Vercel preview + Supabase staging
+Production: Vercel + Supabase production
+
+9.2 CI/CD
+
+GitHub Actions pour lint/test
+Auto-deploy sur Vercel à chaque push
+Migration DB via Supabase CLI
+
+10. Monitoring et analytics
+10.1 Métriques à suivre
+
+Nombre d'ateliers créés
+Nombre d'imports (Notion/GDrive)
+Recherches populaires
+Tags les plus utilisés
+Taux d'engagement des contributeurs
+Erreurs et performances (Sentry)
