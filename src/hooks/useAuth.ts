@@ -40,9 +40,25 @@ export function useAuth() {
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
-        .single()
+        .maybeSingle()
       if (error) throw error
-      return data as Profile
+      if (data) return data as Profile
+      // Profil absent (trigger non exécuté) : on le crée
+      const newProfile = {
+        id: session.user.id,
+        email: session.user.email ?? '',
+        full_name: (session.user.user_metadata?.full_name as string) ?? null,
+        role: 'contributor',
+        avatar_url: null,
+      }
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert(newProfile as Record<string, unknown>)
+      if (insertError) {
+        console.warn('Création du profil échouée (RLS ?):', insertError.message)
+        return null
+      }
+      return newProfile as Profile
     },
     enabled: !!session?.user?.id,
   })
