@@ -58,7 +58,7 @@ export function useAuth() {
       const data = await res.json()
       const existing = Array.isArray(data) && data.length > 0 ? data[0] : null
       if (existing) return existing as Profile
-      // Profil absent : on le crée
+      // Profil absent ou non visible (RLS) : upsert (insert ou update) pour le créer/récupérer
       const newProfile = {
         id: session.user.id,
         email: session.user.email ?? '',
@@ -66,31 +66,16 @@ export function useAuth() {
         role: 'contributor',
         avatar_url: null,
       }
-      const { error: insertError } = await supabase
+      const { data: upserted, error: upsertError } = await supabase
         .from('profiles')
-        .insert(newProfile as Record<string, unknown>)
-      if (!insertError) return newProfile as Profile
-      // Profil déjà existant (trigger ou autre) : on le récupère
-      if (insertError.message?.includes('duplicate key') || insertError.message?.includes('unique constraint')) {
-        const res2 = await fetch(
-          `${supabaseUrl}/rest/v1/profiles?select=*&id=eq.${encodeURIComponent(session.user.id)}`,
-          {
-            method: 'GET',
-            headers: {
-              apikey: supabaseKey,
-              Authorization: `Bearer ${session.access_token}`,
-              Accept: 'application/json',
-              'Accept-Profile': 'public',
-            },
-          }
-        )
-        if (res2.ok) {
-          const data2 = await res2.json()
-          const row = Array.isArray(data2) && data2.length > 0 ? data2[0] : null
-          if (row) return row as Profile
-        }
+        .upsert(newProfile as Record<string, unknown>, { onConflict: 'id' })
+        .select()
+      if (!upsertError && Array.isArray(upserted) && upserted.length > 0) {
+        return upserted[0] as Profile
       }
-      console.warn('Profil non disponible:', insertError.message)
+      if (upsertError) {
+        console.warn('Profil upsert échoué:', upsertError.message)
+      }
       return null
     },
     enabled: !!session?.user?.id,
