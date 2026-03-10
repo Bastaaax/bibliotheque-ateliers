@@ -83,18 +83,18 @@ export function useWorkshops(filters?: WorkshopFilters) {
 
   const createWorkshop = useMutation({
     mutationFn: async (data: WorkshopFormData) => {
-      const { tagIds, ...workshopData } = data
+      const { tagIds, icon: _icon, ...rest } = data
       const {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) throw new Error('Non authentifié')
 
+      const payload: Record<string, unknown> = { ...rest, creator_id: user.id }
+      if (_icon != null && _icon !== '') payload.icon = _icon
+
       const { data: workshop, error: workshopError } = await supabase
         .from('workshops')
-        .insert({
-          ...workshopData,
-          creator_id: user.id,
-        } as Record<string, unknown>)
+        .insert(payload)
         .select()
         .single()
 
@@ -119,11 +119,13 @@ export function useWorkshops(filters?: WorkshopFilters) {
 
   const updateWorkshop = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: WorkshopFormData }) => {
-      const { tagIds, ...workshopData } = data
+      const { tagIds, icon: _icon, ...rest } = data
+      const payload: Record<string, unknown> = { ...rest }
+      if (_icon !== undefined) payload.icon = _icon
 
       const { data: workshop, error: workshopError } = await supabase
         .from('workshops')
-        .update(workshopData as Record<string, unknown>)
+        .update(payload)
         .eq('id', id)
         .select()
         .single()

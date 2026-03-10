@@ -41,6 +41,7 @@ export interface Database {
       workshops: {
         Row: {
           id: string
+          icon: string | null
           title: string
           description: string | null
           content: string | null
@@ -58,6 +59,7 @@ export interface Database {
         }
         Insert: {
           id?: string
+          icon?: string | null
           title: string
           description?: string | null
           content?: string | null
@@ -74,6 +76,7 @@ export interface Database {
           source_url?: string | null
         }
         Update: {
+          icon?: string | null
           title?: string
           description?: string | null
           content?: string | null
@@ -89,11 +92,30 @@ export interface Database {
           source_url?: string | null
         }
       }
+      tag_categories: {
+        Row: {
+          id: string
+          name: string
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          sort_order?: number
+          created_at?: string
+        }
+        Update: {
+          name?: string
+          sort_order?: number
+        }
+      }
       tags: {
         Row: {
           id: string
           name: string
           category: string
+          category_id: string | null
           color: string
           created_at: string
         }
@@ -101,12 +123,14 @@ export interface Database {
           id?: string
           name: string
           category?: string
+          category_id?: string | null
           color?: string
           created_at?: string
         }
         Update: {
           name?: string
           category?: string
+          category_id?: string | null
           color?: string
         }
       }

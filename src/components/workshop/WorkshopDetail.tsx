@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import type { Workshop } from '@/types'
 import { WORKSHOP_ATTACHMENTS_BUCKET } from '@/utils/constants'
+import { DerouleTableView } from './DerouleTableView'
 
 interface WorkshopDetailProps {
   workshopId: string
@@ -88,7 +89,10 @@ export function WorkshopDetail({ workshopId }: WorkshopDetailProps) {
     <div className="space-y-6 p-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <h1 className="font-heading text-4xl font-bold">{w.title}</h1>
+          <h1 className="font-heading text-4xl font-bold flex items-center gap-3">
+            {w.icon && <span className="text-4xl" aria-hidden>{w.icon}</span>}
+            {w.title}
+          </h1>
           <p className="mt-2 text-muted-foreground">
             Par {creatorName} · {formatDate(w.created_at)}
           </p>
@@ -171,12 +175,30 @@ export function WorkshopDetail({ workshopId }: WorkshopDetailProps) {
       )}
 
       {w.content && (
-        <section>
-          <h2 className="font-heading text-2xl font-semibold">Contenu détaillé</h2>
-          <div
-            className="mt-2 rounded-lg bg-muted/50 p-4 font-body prose prose-sm max-w-none dark:prose-invert"
-            dangerouslySetInnerHTML={{ __html: w.content }}
-          />
+        <section className="rounded-xl border bg-card">
+          <div className="border-b px-5 py-3">
+            <h2 className="font-heading text-lg font-semibold text-muted-foreground">Contenu détaillé</h2>
+          </div>
+          <div className="px-5 py-4">
+            {(() => {
+              try {
+                const data = JSON.parse(w.content) as { type?: string }
+                if (data?.type === 'deroule') {
+                  return <DerouleTableView content={w.content} />
+                }
+              } catch {
+                /* legacy HTML */
+              }
+              return (
+                <div
+                  className="workshop-content-view prose prose-editor-headings prose-sm max-w-none dark:prose-invert
+                    prose-p:my-2 prose-ul:my-2 prose-li:my-0.5
+                    [&_mark]:rounded [&_span[style*='background']]:rounded"
+                  dangerouslySetInnerHTML={{ __html: w.content }}
+                />
+              )
+            })()}
+          </div>
         </section>
       )}
 

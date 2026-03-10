@@ -2,6 +2,7 @@ import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { WorkshopForm } from '@/components/workshop/WorkshopForm'
 import { useWorkshop, useWorkshops } from '@/hooks/useWorkshops'
 import { useTags } from '@/hooks/useTags'
+import { useTagCategories } from '@/hooks/useTagCategories'
 import { useToast } from '@/components/ui/use-toast'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
@@ -18,11 +19,13 @@ export default function WorkshopEditPage() {
   )
   const { createWorkshop, updateWorkshop } = useWorkshops()
   const { tags } = useTags()
+  const { categories: tagCategories } = useTagCategories()
   const { toast } = useToast()
 
   const defaultValues: Partial<WorkshopFormData> | undefined = isNew
     ? duplicateId && workshop
       ? {
+          icon: workshop.icon ?? undefined,
           title: `${workshop.title} (copie)`,
           description: workshop.description ?? undefined,
           content: workshop.content ?? undefined,
@@ -36,6 +39,7 @@ export default function WorkshopEditPage() {
       : undefined
     : workshop
       ? {
+          icon: workshop.icon ?? undefined,
           title: workshop.title,
           description: workshop.description ?? undefined,
           content: workshop.content ?? undefined,
@@ -72,14 +76,14 @@ export default function WorkshopEditPage() {
   const showForm = isNew || workshop
 
   return (
-    <div className="container max-w-3xl py-6">
-      <Button asChild variant="ghost" size="sm" className="mb-6">
+    <div className="container max-w-2xl py-8">
+      <Button asChild variant="ghost" size="sm" className="mb-6 -ml-2">
         <Link to="/">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Retour au tableau de bord
+          Retour
         </Link>
       </Button>
-      <h1 className="font-heading text-3xl font-bold mb-6">
+      <h1 className="font-heading text-2xl font-bold text-muted-foreground mb-8">
         {isNew ? 'Nouvel atelier' : 'Modifier l\'atelier'}
       </h1>
       {isLoading ? (
@@ -88,6 +92,7 @@ export default function WorkshopEditPage() {
         <WorkshopForm
           defaultValues={defaultValues}
           tags={tags}
+          tagCategories={tagCategories}
           onSubmit={handleSubmit}
           isLoading={isNew ? createWorkshop.isPending : updateWorkshop.isPending}
           submitLabel={isNew ? 'Créer l\'atelier' : 'Enregistrer'}

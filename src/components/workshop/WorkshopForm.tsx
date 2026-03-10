@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Form,
   FormControl,
@@ -12,16 +13,22 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { WorkshopEditor } from './WorkshopEditor'
-import { TagBadge } from '@/components/tags/TagBadge'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Checkbox } from '@/components/ui/checkbox'
+import { DerouleTableEditor } from './DerouleTableEditor'
 import type { WorkshopFormData } from '@/types'
-import type { Tag } from '@/types'
+import type { Tag, TagCategory } from '@/types'
 import { Plus, X } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { useState } from 'react'
+import { EmojiPicker } from './EmojiPicker'
 
 const workshopSchema = z.object({
+  icon: z.string().max(10).nullable().optional(),
   title: z.string().min(1, 'Le titre est requis').max(200),
   description: z.string().optional(),
   content: z.string().optional(),
@@ -38,6 +45,7 @@ type WorkshopFormValues = z.infer<typeof workshopSchema>
 interface WorkshopFormProps {
   defaultValues?: Partial<WorkshopFormData>
   tags: Tag[]
+  tagCategories?: TagCategory[]
   onSubmit: (data: WorkshopFormData) => void | Promise<void>
   isLoading?: boolean
   submitLabel?: string
@@ -49,6 +57,7 @@ const emptyObjective = ''
 export function WorkshopForm({
   defaultValues,
   tags,
+  tagCategories = [],
   onSubmit,
   isLoading = false,
   submitLabel = 'Enregistrer',
@@ -63,6 +72,7 @@ export function WorkshopForm({
   const form = useForm<WorkshopFormValues>({
     resolver: zodResolver(workshopSchema),
     defaultValues: {
+      icon: defaultValues?.icon ?? null,
       title: defaultValues?.title ?? '',
       description: defaultValues?.description ?? '',
       content: defaultValues?.content ?? '',
@@ -76,7 +86,24 @@ export function WorkshopForm({
   })
 
   const selectedTagIds = form.watch('tagIds')
-  const selectedTags = tags.filter((t) => selectedTagIds.includes(t.id))
+
+  const setTagInCategory = (categoryId: string | null, tagId: string | null) => {
+    const otherTagIds = selectedTagIds.filter((id) => {
+      const tag = tags.find((t) => t.id === id)
+      return tag && tag.category_id !== categoryId
+    })
+    form.setValue('tagIds', tagId ? [...otherTagIds, tagId] : otherTagIds)
+  }
+
+  const TAG_NONE_VALUE = '__none__'
+
+  const getSelectedTagForCategory = (categoryId: string | null) => {
+    const tagId = selectedTagIds.find((id) => {
+      const tag = tags.find((t) => t.id === id)
+      return tag && tag.category_id === categoryId
+    })
+    return tagId ?? TAG_NONE_VALUE
+  }
 
   const addMaterial = () => setMaterials((prev) => [...prev, emptyMaterial])
   const removeMaterial = (i: number) =>
@@ -112,17 +139,25 @@ export function WorkshopForm({
     })
   })
 
-  const toggleTag = (tagId: string) => {
-    const current = form.getValues('tagIds')
-    const next = current.includes(tagId)
-      ? current.filter((id) => id !== tagId)
-      : [...current, tagId]
-    form.setValue('tagIds', next)
-  }
-
   return (
     <Form {...form}>
       <form onSubmit={handleSubmit} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="icon"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Emoji (à côté du titre)</FormLabel>
+              <FormControl>
+                <EmojiPicker
+                  value={field.value ?? null}
+                  onChange={field.onChange}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="title"
@@ -161,14 +196,15 @@ export function WorkshopForm({
           control={form.control}
           name="content"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Contenu détaillé</FormLabel>
+            <FormItem className="space-y-2">
+              <div>
+                <FormLabel className="text-base font-medium">Contenu détaillé</FormLabel>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Tableau déroulé : heure, durée, programme, qui. Collez du contenu depuis Google Docs, Notion ou Word. Ajoutez ou supprimez des lignes.
+                </p>
+              </div>
               <FormControl>
-                <WorkshopEditor
-                  value={field.value ?? ''}
-                  onChange={field.onChange}
-                  placeholder="Contenu riche (objectifs, déroulé, conseils...)"
-                />
+                <DerouleTableEditor value={field.value ?? ''} onChange={field.onChange} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -305,40 +341,71 @@ export function WorkshopForm({
           render={() => (
             <FormItem>
               <FormLabel>Tags</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start">
-                    {selectedTags.length > 0
-                      ? `${selectedTags.length} tag(s) sélectionné(s)`
-                      : 'Sélectionner des tags'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-2" align="start">
-                  <div className="flex flex-wrap gap-2">
-                    {tags.map((tag) => (
-                      <div
-                        key={tag.id}
-                        className="flex items-center gap-1"
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => toggleTag(tag.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault()
-                            toggleTag(tag.id)
-                          }
-                        }}
-                      >
-                        <Checkbox
-                          checked={selectedTagIds.includes(tag.id)}
-                          onCheckedChange={() => toggleTag(tag.id)}
-                        />
-                        <TagBadge tag={tag} />
+              <FormDescription>Un tag par catégorie (liste verticale)</FormDescription>
+              <FormControl>
+                <div className="flex flex-col gap-4">
+                  {tagCategories.map((cat) => {
+                    const categoryTags = tags.filter((t) => t.category_id === cat.id)
+                    if (categoryTags.length === 0) return null
+                    return (
+                      <div key={cat.id} className="space-y-2">
+                        <Label className="text-sm font-medium">{cat.name}</Label>
+                        <Select
+                          value={getSelectedTagForCategory(cat.id)}
+                          onValueChange={(v) => setTagInCategory(cat.id, v === TAG_NONE_VALUE ? null : v)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Aucun" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={TAG_NONE_VALUE}>Aucun</SelectItem>
+                            {categoryTags.map((tag) => (
+                              <SelectItem key={tag.id} value={tag.id}>
+                                <span className="inline-flex items-center gap-2">
+                                  <span
+                                    className="inline-block h-2 w-2 rounded-full shrink-0"
+                                    style={{ backgroundColor: tag.color }}
+                                  />
+                                  {tag.name}
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
+                    )
+                  })}
+                  {tags.some((t) => t.category_id == null) && (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Sans catégorie</Label>
+                      <Select
+                        value={getSelectedTagForCategory(null)}
+                        onValueChange={(v) => setTagInCategory(null, v === TAG_NONE_VALUE ? null : v)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Aucun" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={TAG_NONE_VALUE}>Aucun</SelectItem>
+                          {tags
+                            .filter((t) => t.category_id == null)
+                            .map((tag) => (
+                              <SelectItem key={tag.id} value={tag.id}>
+                                <span className="inline-flex items-center gap-2">
+                                  <span
+                                    className="inline-block h-2 w-2 rounded-full shrink-0"
+                                    style={{ backgroundColor: tag.color }}
+                                  />
+                                  {tag.name}
+                                </span>
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

@@ -1,3 +1,6 @@
+@import './styles/_variables.scss';
+@import './styles/_keyframe-animations.scss';
+
 @import url('https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Sarabun:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
@@ -57,6 +60,31 @@
 
   h3 {
     @apply text-3xl;
+  }
+
+  /* Titres de l’éditeur rich text (contenu atelier) en Sarabun, pas Caveat */
+  .prose-editor-headings h1,
+  .prose-editor-headings h2,
+  .prose-editor-headings h3,
+  .prose-editor-headings h4 {
+    font-family: 'Sarabun', sans-serif;
+  }
+
+  /* Tableaux en vue lecture (fiche atelier) : bordures toujours visibles */
+  .workshop-content-view table {
+    border-collapse: collapse;
+    width: 100%;
+    border: 1px solid hsl(var(--border));
+  }
+  .workshop-content-view table th,
+  .workshop-content-view table td {
+    border: 1px solid hsl(var(--border));
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+  }
+  .workshop-content-view table th {
+    background-color: hsl(var(--muted));
+    font-weight: 600;
   }
 }
 

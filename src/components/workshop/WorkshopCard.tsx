@@ -24,8 +24,11 @@ export function WorkshopCard({ workshop, className }: WorkshopCardProps) {
         )}
       >
         <CardHeader className="pb-2">
-          <h3 className="font-heading text-xl font-semibold leading-tight line-clamp-2">
-            {workshop.title}
+          <h3 className="font-heading text-xl font-semibold leading-tight line-clamp-2 flex items-center gap-2">
+            {workshop.icon && (
+              <span className="shrink-0 text-2xl" aria-hidden>{workshop.icon}</span>
+            )}
+            <span>{workshop.title}</span>
           </h3>
           <p className="text-sm text-muted-foreground line-clamp-2">
             {truncate(workshop.description ?? '', 120)}

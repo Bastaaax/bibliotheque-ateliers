@@ -1,0 +1,5 @@
+# Configuration des Edge Functions
+# Le callback OAuth est appelé par Google (redirection navigateur) sans en-tête Authorization.
+# On désactive la vérification JWT pour cette fonction uniquement.
+[functions.google-oauth-callback]
+verify_jwt = false

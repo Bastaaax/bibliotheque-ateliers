@@ -12,6 +12,7 @@ export interface Profile {
 
 export interface Workshop {
   id: string
+  icon: string | null
   title: string
   description: string | null
   content: string | null
@@ -31,10 +32,18 @@ export interface Workshop {
   attachments?: Attachment[]
 }
 
+export interface TagCategory {
+  id: string
+  name: string
+  sort_order: number
+  created_at?: string
+}
+
 export interface Tag {
   id: string
   name: string
   category: 'workshop_type' | 'stage_type' | 'custom'
+  category_id: string | null
   color: string
   created_at: string
 }
@@ -91,6 +100,7 @@ export interface WorkshopFilters {
 }
 
 export interface WorkshopFormData {
+  icon?: string | null
   title: string
   description?: string
   content?: string

@@ -37,6 +37,7 @@ CREATE TRIGGER on_auth_user_created
 
 CREATE TABLE workshops (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  icon TEXT,
   title TEXT NOT NULL,
   description TEXT,
   content TEXT,
