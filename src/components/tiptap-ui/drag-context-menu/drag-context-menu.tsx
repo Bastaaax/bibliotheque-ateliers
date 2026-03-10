@@ -43,10 +43,9 @@ import {
 } from "@/components/tiptap-ui/copy-anchor-link-button"
 import { useResetAllFormatting } from "@/components/tiptap-ui/reset-all-formatting-button"
 import { SlashCommandTriggerButton } from "@/components/tiptap-ui/slash-command-trigger-button"
-import {
-  AskAiShortcutBadge,
-  useAiAsk,
-} from "@/components/tiptap-ui/ai-ask-button"
+// AI (TipTap Pro) désactivé en build open source — stub pour éviter import @tiptap-pro
+const useAiAsk = () => ({ canAiAsk: false, handleAiAsk: () => {}, Icon: () => null })
+const AskAiShortcutBadge = () => null
 import { useText } from "@/components/tiptap-ui/text-button"
 import { useHeading } from "@/components/tiptap-ui/heading-button"
 import { useList } from "@/components/tiptap-ui/list-button"
