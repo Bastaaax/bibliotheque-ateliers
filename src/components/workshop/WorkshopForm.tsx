@@ -16,9 +16,9 @@ import {
 import { DerouleTableEditor } from './DerouleTableEditor'
 import { ObjectiveInputWithSuggestions } from './ObjectiveInputWithSuggestions'
 import { useUniqueObjectives } from '@/hooks/useObjectives'
-import type { WorkshopFormData } from '@/types'
+import type { WorkshopFormData, WorkshopResourceLink } from '@/types'
 import type { Tag, TagCategory } from '@/types'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, Link as LinkIcon } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -29,6 +29,7 @@ import {
 import { useState } from 'react'
 import { EmojiPicker } from './EmojiPicker'
 
+const resourceLinkSchema = z.object({ label: z.string().min(1), url: z.string().url('URL invalide') })
 const workshopSchema = z.object({
   icon: z.string().max(10).nullable().optional(),
   title: z.string().min(1, 'Le titre est requis').max(200),
@@ -39,6 +40,7 @@ const workshopSchema = z.object({
   participants_max: z.coerce.number().int().min(0).max(500).optional().nullable(),
   materials: z.array(z.string()).default([]),
   objectives: z.array(z.string()).default([]),
+  resource_links: z.array(resourceLinkSchema).default([]),
   tagIds: z.array(z.string()).default([]),
 })
 
@@ -72,6 +74,9 @@ export function WorkshopForm({
   const [objectives, setObjectives] = useState<string[]>(
     defaultValues?.objectives?.length ? [...defaultValues.objectives, emptyObjective] : [emptyObjective]
   )
+  const [resourceLinks, setResourceLinks] = useState<WorkshopResourceLink[]>(
+    defaultValues?.resource_links?.length ? [...defaultValues.resource_links] : []
+  )
 
   const form = useForm<WorkshopFormValues>({
     resolver: zodResolver(workshopSchema),
@@ -85,6 +90,7 @@ export function WorkshopForm({
       participants_max: defaultValues?.participants_max ?? null,
       materials: defaultValues?.materials ?? [],
       objectives: defaultValues?.objectives ?? [],
+      resource_links: defaultValues?.resource_links ?? [],
       tagIds: defaultValues?.tagIds ?? [],
     },
   })
@@ -130,9 +136,20 @@ export function WorkshopForm({
       return next
     })
 
+  const addResourceLink = () => setResourceLinks((prev) => [...prev, { label: '', url: '' }])
+  const removeResourceLink = (i: number) =>
+    setResourceLinks((prev) => prev.filter((_, idx) => idx !== i))
+  const updateResourceLink = (i: number, field: 'label' | 'url', value: string) =>
+    setResourceLinks((prev) => {
+      const next = [...prev]
+      next[i] = { ...next[i], [field]: value }
+      return next
+    })
+
   const handleSubmit = form.handleSubmit(async (values) => {
     const materialsFiltered = materials.filter(Boolean)
     const objectivesFiltered = objectives.filter(Boolean)
+    const resourceLinksFiltered = resourceLinks.filter((r) => r.label.trim() && r.url.trim())
     await onSubmit({
       ...values,
       duration_minutes: values.duration_minutes ?? undefined,
@@ -140,6 +157,7 @@ export function WorkshopForm({
       participants_max: values.participants_max ?? undefined,
       materials: materialsFiltered,
       objectives: objectivesFiltered,
+      resource_links: resourceLinksFiltered,
       tagIds: values.tagIds,
     })
   })
@@ -147,35 +165,39 @@ export function WorkshopForm({
   return (
     <Form {...form}>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="icon"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Emoji (à côté du titre)</FormLabel>
-              <FormControl>
-                <EmojiPicker
-                  value={field.value ?? null}
-                  onChange={field.onChange}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Titre *</FormLabel>
-              <FormControl>
-                <Input placeholder="Titre de l'atelier" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="flex flex-col gap-2">
+          <FormLabel>Titre *</FormLabel>
+          <div className="flex gap-3 items-start">
+            <FormField
+              control={form.control}
+              name="icon"
+              render={({ field }) => (
+                <FormItem className="shrink-0">
+                  <FormControl>
+                    <EmojiPicker
+                      value={field.value ?? null}
+                      onChange={field.onChange}
+                      triggerClassName="h-10 w-10"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem className="flex-1 min-w-0">
+                  <FormControl>
+                    <Input placeholder="Titre de l'atelier" className="h-10" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
 
         <FormField
           control={form.control}
@@ -330,6 +352,48 @@ export function WorkshopForm({
             <Button type="button" variant="outline" size="sm" onClick={addMaterial}>
               <Plus className="mr-2 h-4 w-4" />
               Ajouter du matériel
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <FormLabel className="flex items-center gap-2">
+            <LinkIcon className="h-4 w-4" />
+            Ressources (liens)
+          </FormLabel>
+          <FormDescription>
+            PPT, documents à imprimer, etc. Chaque lien sera téléchargeable ou ouvrable depuis la fiche atelier.
+          </FormDescription>
+          <div className="space-y-2">
+            {resourceLinks.map((r, i) => (
+              <div key={i} className="flex flex-col gap-2 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:gap-2">
+                <Input
+                  value={r.label}
+                  onChange={(e) => updateResourceLink(i, 'label', e.target.value)}
+                  placeholder="Ex. Support PPT, Fiche à imprimer"
+                  className="sm:max-w-[200px]"
+                />
+                <Input
+                  type="url"
+                  value={r.url}
+                  onChange={(e) => updateResourceLink(i, 'url', e.target.value)}
+                  placeholder="https://..."
+                  className="flex-1 min-w-0"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeResourceLink(i)}
+                  aria-label="Supprimer le lien"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            <Button type="button" variant="outline" size="sm" onClick={addResourceLink}>
+              <Plus className="mr-2 h-4 w-4" />
+              Ajouter un lien
             </Button>
           </div>
         </div>

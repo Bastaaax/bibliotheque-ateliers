@@ -15,6 +15,12 @@ export interface Profile {
   updated_at: string
 }
 
+/** Lien ressource (PPT, doc à imprimer, etc.) */
+export interface WorkshopResourceLink {
+  label: string
+  url: string
+}
+
 export interface Workshop {
   id: string
   icon: string | null
@@ -26,6 +32,8 @@ export interface Workshop {
   participants_max: number | null
   materials: string[]
   objectives: string[]
+  /** Liens vers ressources (présentation, doc à imprimer, etc.) */
+  resource_links?: WorkshopResourceLink[]
   creator_id: string | null
   creator?: Profile
   created_at: string
@@ -116,5 +124,6 @@ export interface WorkshopFormData {
   participants_max?: number
   materials: string[]
   objectives: string[]
+  resource_links?: WorkshopResourceLink[]
   tagIds: string[]
 }

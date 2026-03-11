@@ -85,7 +85,7 @@ export function LoginForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button type="submit" variant="brand" className="w-full" disabled={isLoading}>
           {isLoading ? 'Connexion...' : 'Se connecter'}
         </Button>
         <p className="text-center text-sm text-muted-foreground">

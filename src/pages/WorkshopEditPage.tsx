@@ -34,6 +34,7 @@ export default function WorkshopEditPage() {
           participants_max: workshop.participants_max ?? undefined,
           materials: workshop.materials ?? [],
           objectives: workshop.objectives ?? [],
+          resource_links: workshop.resource_links ?? [],
           tagIds: (workshop.tags ?? []).map((t) => t.id),
         }
       : undefined
@@ -48,6 +49,7 @@ export default function WorkshopEditPage() {
           participants_max: workshop.participants_max ?? undefined,
           materials: workshop.materials ?? [],
           objectives: workshop.objectives ?? [],
+          resource_links: workshop.resource_links ?? [],
           tagIds: (workshop.tags ?? []).map((t) => t.id),
         }
       : undefined
@@ -83,9 +85,11 @@ export default function WorkshopEditPage() {
           Retour
         </Link>
       </Button>
-      <h1 className="font-heading text-2xl font-bold text-muted-foreground mb-8">
-        {isNew ? 'Nouvel atelier' : 'Modifier l\'atelier'}
-      </h1>
+      {!isNew && (
+        <h1 className="font-heading text-2xl font-bold text-muted-foreground mb-8">
+          Modifier l&apos;atelier
+        </h1>
+      )}
       {isLoading ? (
         <LoadingSpinner />
       ) : showForm ? (

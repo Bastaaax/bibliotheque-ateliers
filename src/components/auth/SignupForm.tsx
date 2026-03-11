@@ -128,7 +128,7 @@ export function SignupForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button type="submit" variant="brand" className="w-full" disabled={isLoading}>
           {isLoading ? 'Inscription...' : "S'inscrire"}
         </Button>
         <p className="text-center text-sm text-muted-foreground">

@@ -148,6 +148,7 @@ export function WorkshopDetail({ workshopId }: WorkshopDetailProps) {
   const creatorName = w.creator?.full_name ?? w.creator?.email ?? 'Inconnu'
   const tags = w.tags ?? []
   const attachments = w.attachments ?? []
+  const resourceLinks = Array.isArray(w.resource_links) ? w.resource_links : []
 
   return (
     <div className="space-y-6 p-6">
@@ -291,6 +292,38 @@ export function WorkshopDetail({ workshopId }: WorkshopDetailProps) {
                     href={getAttachmentUrl(att.file_path)}
                     download={att.file_name}
                     aria-label={`Télécharger ${att.file_name}`}
+                  >
+                    <Download className="h-4 w-4" />
+                  </a>
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {resourceLinks.length > 0 && (
+        <section>
+          <h2 className="font-heading text-2xl font-semibold">Ressources</h2>
+          <ul className="mt-2 space-y-2">
+            {resourceLinks.map((r, i) => (
+              <li key={i} className="flex items-center gap-2">
+                <FileDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                <a
+                  href={r.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary-dark hover:underline"
+                >
+                  {r.label || r.url}
+                </a>
+                <Button variant="ghost" size="icon" asChild>
+                  <a
+                    href={r.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download
+                    aria-label={`Télécharger ${r.label || 'ressource'}`}
                   >
                     <Download className="h-4 w-4" />
                   </a>
