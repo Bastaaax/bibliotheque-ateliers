@@ -128,10 +128,15 @@ export function useAuth() {
     },
   })
 
+  const profileType = profile?.profile_type ?? (profile?.role === 'admin' ? 'director' : 'formateur')
+  const isDirector = profileType === 'director'
+
   return {
     session,
     profile,
     isAdmin: profile?.role === 'admin',
+    profileType,
+    isDirector,
     signIn,
     signUp,
     signOut,

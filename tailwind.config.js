@@ -13,10 +13,13 @@ export default {
       center: true,
       padding: '2rem',
       screens: {
-        '2xl': '1400px',
+        '2xl': '1536px',
       },
     },
     extend: {
+      screens: {
+        desktop: '700px',
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -26,6 +29,8 @@ export default {
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
+          hover: 'hsl(var(--primary-hover))',
+          dark: 'hsl(var(--primary-dark))',
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
@@ -34,10 +39,12 @@ export default {
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
+          hover: 'hsl(var(--destructive-hover))',
         },
         muted: {
           DEFAULT: 'hsl(var(--muted))',
           foreground: 'hsl(var(--muted-foreground))',
+          hover: 'hsl(var(--muted-hover))',
         },
         accent: {
           DEFAULT: 'hsl(var(--accent))',
@@ -51,15 +58,42 @@ export default {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        sgdf: {
+          default: 'var(--sgdf-color-default)',
+          'default-hover': 'var(--sgdf-color-default-hover)',
+          'bg-primary': 'var(--sgdf-color-bg-primary)',
+          'bg-primary-hovered': 'var(--sgdf-color-bg-primary-hovered)',
+          'bg-neutral': 'var(--sgdf-color-bg-neutral)',
+          'bg-neutral-alt': 'var(--sgdf-color-bg-neutral-alt)',
+          'text-default': 'var(--sgdf-color-text-default)',
+          'text-primary': 'var(--sgdf-color-text-primary)',
+          'text-light': 'var(--sgdf-color-text-light)',
+          'text-inverted': 'var(--sgdf-color-text-inverted)',
+        },
       },
       fontFamily: {
-        heading: ['"Caveat Brush"', 'cursive'],
-        body: ['"Sarabun"', 'sans-serif'],
+        heading: ['var(--sgdf-font-heading)', 'sans-serif'],
+        body: ['var(--sgdf-font-body)', 'sans-serif'],
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        lg: 'var(--sgdf-border-radius-large)',
+        md: 'var(--sgdf-border-radius-medium)',
+        sm: 'var(--sgdf-border-radius-small)',
+        xl: 'var(--sgdf-border-radius-x-large)',
+      },
+      boxShadow: {
+        'sgdf-sm': 'var(--sgdf-shadow-small)',
+        'sgdf': 'var(--sgdf-shadow-medium)',
+        'sgdf-lg': 'var(--sgdf-shadow-large)',
+        'sgdf-xl': 'var(--sgdf-shadow-x-large)',
+      },
+      transitionDuration: {
+        'sgdf-fast': 'var(--sgdf-transition-fast)',
+        'sgdf-medium': 'var(--sgdf-transition-medium)',
+        'sgdf-slow': 'var(--sgdf-transition-slow)',
+      },
+      transitionTimingFunction: {
+        'sgdf': 'var(--sgdf-transition-easing)',
       },
     },
   },

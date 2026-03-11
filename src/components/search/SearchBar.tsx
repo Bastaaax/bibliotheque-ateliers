@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { forwardRef, useCallback, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -9,15 +9,20 @@ interface SearchBarProps {
   placeholder?: string
   debounceMs?: number
   className?: string
+  id?: string
 }
 
-export function SearchBar({
-  value: controlledValue,
-  onChange,
-  placeholder = 'Rechercher des ateliers...',
-  debounceMs = 300,
-  className,
-}: SearchBarProps) {
+export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(function SearchBar(
+  {
+    value: controlledValue,
+    onChange,
+    placeholder = 'Rechercher des ateliers...',
+    debounceMs = 300,
+    className,
+    id = 'search-input',
+  },
+  ref
+) {
   const [localValue, setLocalValue] = useState(controlledValue ?? '')
   const [debounceRef, setDebounceRef] = useState<ReturnType<typeof setTimeout> | null>(null)
 
@@ -26,11 +31,11 @@ export function SearchBar({
       const v = e.target.value
       setLocalValue(v)
       if (debounceRef) clearTimeout(debounceRef)
-      const id = setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         onChange(v)
         setDebounceRef(null)
       }, debounceMs)
-      setDebounceRef(id)
+      setDebounceRef(timeoutId)
     },
     [onChange, debounceMs, debounceRef]
   )
@@ -41,6 +46,8 @@ export function SearchBar({
     <div className={cn('relative', className)}>
       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
       <Input
+        ref={ref}
+        id={id}
         type="search"
         value={displayValue}
         onChange={handleChange}
@@ -50,4 +57,4 @@ export function SearchBar({
       />
     </div>
   )
-}
+})

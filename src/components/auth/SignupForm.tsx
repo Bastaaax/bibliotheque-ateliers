@@ -133,7 +133,7 @@ export function SignupForm() {
         </Button>
         <p className="text-center text-sm text-muted-foreground">
           Déjà un compte ?{' '}
-          <Link to="/login" className="text-primary hover:underline">
+          <Link to="/login" className="text-primary-dark hover:underline">
             Se connecter
           </Link>
         </p>

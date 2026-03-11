@@ -6,6 +6,8 @@ import { Layout } from './components/layout/Layout'
 import { LoadingSpinner } from './components/common/LoadingSpinner'
 import { Toaster } from './components/ui/toaster'
 import Dashboard from './pages/Dashboard'
+import MyWorkshopsPage from './pages/MyWorkshopsPage'
+import EspacePage from './pages/EspacePage'
 import WorkshopDetailPage from './pages/WorkshopDetailPage'
 import WorkshopEditPage from './pages/WorkshopEditPage'
 import IntegrationsPage from './pages/IntegrationsPage'
@@ -52,6 +54,8 @@ function App() {
             }
           >
             <Route index element={<Dashboard />} />
+            <Route path="my-workshops" element={<MyWorkshopsPage />} />
+            <Route path="espace" element={<EspacePage />} />
             <Route path="workshops/:id" element={<WorkshopDetailPage />} />
             <Route path="workshops/:id/edit" element={<WorkshopEditPage />} />
             <Route path="workshops/new" element={<WorkshopEditPage />} />

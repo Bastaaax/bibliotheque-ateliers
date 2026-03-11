@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button'
+import { Button, type ButtonProps } from '@/components/ui/button'
 import { FileQuestion } from 'lucide-react'
 
 interface EmptyStateProps {
@@ -6,6 +6,7 @@ interface EmptyStateProps {
   description?: string
   actionLabel?: string
   onAction?: () => void
+  actionVariant?: ButtonProps['variant']
   icon?: React.ReactNode
 }
 
@@ -14,6 +15,7 @@ export function EmptyState({
   description,
   actionLabel,
   onAction,
+  actionVariant = 'default',
   icon = <FileQuestion className="h-16 w-16 text-muted-foreground" />,
 }: EmptyStateProps) {
   return (
@@ -22,7 +24,7 @@ export function EmptyState({
       <h3 className="font-heading text-2xl font-semibold">{title}</h3>
       {description && <p className="mt-2 text-sm text-muted-foreground">{description}</p>}
       {actionLabel && onAction && (
-        <Button className="mt-6" onClick={onAction}>
+        <Button variant={actionVariant} className="mt-6" onClick={onAction}>
           {actionLabel}
         </Button>
       )}

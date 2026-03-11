@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { WorkshopCard } from '@/components/workshop/WorkshopCard'
 import { EmptyState } from '@/components/common/EmptyState'
@@ -6,7 +6,7 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { useWorkshops } from '@/hooks/useWorkshops'
 import { useTags } from '@/hooks/useTags'
 import { useUniqueObjectives } from '@/hooks/useObjectives'
-import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/hooks/useAuth'
 import { SearchBar } from '@/components/search/SearchBar'
 import { FilterPanel } from '@/components/search/FilterPanel'
 import {
@@ -20,11 +20,12 @@ import { Button } from '@/components/ui/button'
 import { WorkshopFilters } from '@/types'
 import { Plus, Filter, LayoutGrid, List, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { supabase } from '@/lib/supabase'
 
-function countActiveFilters(f: WorkshopFilters): number {
+function countActiveFilters(f: WorkshopFilters, excludeCreator = false): number {
   let n = 0
   if (f.tagIds?.length) n += f.tagIds.length
-  if (f.creatorId) n += 1
+  if (!excludeCreator && f.creatorId) n += 1
   if (f.durationMin != null && f.durationMin > 0) n += 1
   if (f.durationMax != null && f.durationMax < 240) n += 1
   if (f.participantsMin != null) n += 1
@@ -37,12 +38,12 @@ function ActiveFilterChips({
   filters,
   onFiltersChange,
   tags,
-  creators,
+  excludeCreator,
 }: {
   filters: WorkshopFilters
   onFiltersChange: (f: WorkshopFilters) => void
   tags: { id: string; name: string; color: string }[]
-  creators: { id: string; full_name: string | null }[]
+  excludeCreator?: boolean
 }) {
   const chips: { key: string; label: string; onRemove: () => void }[] = []
 
@@ -57,11 +58,10 @@ function ActiveFilterChips({
       },
     })
   })
-  if (filters.creatorId) {
-    const creator = creators.find((c) => c.id === filters.creatorId)
+  if (!excludeCreator && filters.creatorId) {
     chips.push({
       key: 'creator',
-      label: `Créateur ou créatrice : ${creator?.full_name ?? '—'}`,
+      label: 'Créateur ou créatrice (moi)',
       onRemove: () => onFiltersChange({ ...filters, creatorId: undefined }),
     })
   }
@@ -129,7 +129,7 @@ function ActiveFilterChips({
           onFiltersChange({
             ...filters,
             tagIds: undefined,
-            creatorId: undefined,
+            creatorId: excludeCreator ? filters.creatorId : undefined,
             durationMin: undefined,
             durationMax: undefined,
             participantsMin: undefined,
@@ -144,14 +144,14 @@ function ActiveFilterChips({
   )
 }
 
-export default function Dashboard() {
+export default function MyWorkshopsPage() {
+  const { profile } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const searchFromUrl = searchParams.get('q') ?? ''
-  const searchInputRef = useRef<HTMLInputElement>(null)
   const [filters, setFilters] = useState<WorkshopFilters>({
     search: searchFromUrl || undefined,
     tagIds: undefined,
-    creatorId: undefined,
+    creatorId: profile?.id,
     dateFrom: undefined,
     dateTo: undefined,
     durationMin: undefined,
@@ -165,19 +165,14 @@ export default function Dashboard() {
   const [creators, setCreators] = useState<{ id: string; full_name: string | null }[]>([])
 
   useEffect(() => {
-    setFilters((prev) => ({ ...prev, search: searchFromUrl || undefined }))
-  }, [searchFromUrl])
+    if (profile?.id) {
+      setFilters((prev) => ({ ...prev, creatorId: profile.id }))
+    }
+  }, [profile?.id])
 
   useEffect(() => {
-    if (searchParams.get('focus') === 'search') {
-      searchInputRef.current?.focus()
-      setSearchParams((prev) => {
-        const p = new URLSearchParams(prev)
-        p.delete('focus')
-        return p
-      })
-    }
-  }, [searchParams, setSearchParams])
+    setFilters((prev) => ({ ...prev, search: searchFromUrl || undefined }))
+  }, [searchFromUrl])
 
   const onSearchChange = (value: string) => {
     const next = new URLSearchParams(searchParams)
@@ -187,14 +182,18 @@ export default function Dashboard() {
   }
 
   const effectiveFilters = useMemo(
-    () => ({ ...filters, search: searchFromUrl.trim() || undefined }),
-    [filters, searchFromUrl]
+    () => ({
+      ...filters,
+      search: searchFromUrl.trim() || undefined,
+      creatorId: profile?.id ?? filters.creatorId,
+    }),
+    [filters, searchFromUrl, profile?.id]
   )
 
   const { workshops, isLoading } = useWorkshops(effectiveFilters)
   const { tags } = useTags()
   const { objectives } = useUniqueObjectives()
-  const activeCount = countActiveFilters(filters)
+  const activeCount = countActiveFilters(filters, true)
 
   useEffect(() => {
     supabase
@@ -204,28 +203,21 @@ export default function Dashboard() {
   }, [])
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] flex flex-col">
-      {/* Barre d’outils : recherche, vue, filtres, CTA */}
+    <div className="flex min-h-[calc(100vh-3.5rem)] flex-col">
       <div className="sticky top-14 z-30 border-b border-border/60 bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:px-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="w-full min-w-0 sm:max-w-xs lg:max-w-sm">
               <SearchBar
-                ref={searchInputRef}
                 value={searchFromUrl}
                 onChange={onSearchChange}
-                placeholder="Rechercher des ateliers…"
+                placeholder="Rechercher dans mes ateliers…"
               />
             </div>
             <div className="flex items-center gap-2">
               <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
                 <SheetTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    aria-label="Ouvrir les filtres"
-                  >
+                  <Button variant="outline" size="sm" className="gap-2" aria-label="Ouvrir les filtres">
                     <Filter className="h-4 w-4" aria-hidden />
                     Filtres
                     {activeCount > 0 && (
@@ -242,10 +234,11 @@ export default function Dashboard() {
                   <div className="flex-1 overflow-y-auto px-6">
                     <FilterPanel
                       filters={filters}
-                      onFiltersChange={setFilters}
+                      onFiltersChange={(f) => setFilters({ ...f, creatorId: profile?.id ?? f.creatorId })}
                       tags={tags}
                       creators={creators}
                       objectives={objectives}
+                      hideCreatorFilter
                     />
                   </div>
                   <div className="border-t px-6 py-4">
@@ -257,7 +250,7 @@ export default function Dashboard() {
                         setFilters({
                           ...filters,
                           tagIds: undefined,
-                          creatorId: undefined,
+                          creatorId: profile?.id,
                           durationMin: undefined,
                           durationMax: undefined,
                           participantsMin: undefined,
@@ -272,7 +265,7 @@ export default function Dashboard() {
                   </div>
                 </SheetContent>
               </Sheet>
-              <div className="flex rounded-lg border border-input p-0.5" role="group" aria-label="Mode d’affichage">
+              <div className="flex rounded-lg border border-input p-0.5" role="group" aria-label="Mode d'affichage">
                 <Button
                   variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
                   size="sm"
@@ -305,32 +298,29 @@ export default function Dashboard() {
             </Button>
           </Link>
         </div>
-
-        {/* Pastilles des filtres actifs */}
         <ActiveFilterChips
           filters={filters}
-          onFiltersChange={setFilters}
+          onFiltersChange={(f) => setFilters({ ...f, creatorId: profile?.id ?? f.creatorId })}
           tags={tags}
-          creators={creators}
+          excludeCreator
         />
       </div>
 
-      {/* Contenu */}
       <div className="flex-1 p-4 md:p-6">
         {isLoading ? (
           <LoadingSpinner />
         ) : workshops.length === 0 ? (
           <EmptyState
-            title="Aucun atelier"
-            description="Créez votre premier atelier ou ajustez les filtres."
-            actionLabel="Nouvel atelier"
+            title="Aucun atelier créé"
+            description="Les ateliers que vous créez apparaîtront ici."
+            actionLabel="Créer un atelier"
             actionVariant="brand"
             onAction={() => (window.location.href = '/workshops/new')}
           />
         ) : (
           <>
             <p className="mb-4 text-sm text-muted-foreground" aria-live="polite">
-              {workshops.length} atelier{workshops.length > 1 ? 's' : ''} trouvé{workshops.length > 1 ? 's' : ''}
+              {workshops.length} atelier{workshops.length > 1 ? 's' : ''}
             </p>
             <div
               className={cn(

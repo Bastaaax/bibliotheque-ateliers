@@ -1,7 +1,6 @@
 @import './styles/_variables.scss';
+@import './styles/_sgdf-tokens.scss';
 @import './styles/_keyframe-animations.scss';
-
-@import url('https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Sarabun:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -9,26 +8,44 @@
 
 @layer base {
   :root {
-    --primary: 204 100% 18%;
-    --primary-foreground: 0 0% 100%;
-    --background: 0 0% 100%;
-    --foreground: 0 0% 10%;
+    /* --- Marque / structure : bleu marine #003a5d (header uniquement, pas en variable ici) --- */
+
+    /* --- Primary interactif : sky (boutons, liens, focus) --- */
+    --primary: 199 89% 48%;           /* sky-500 #0ea5e9 */
+    --primary-hover: 199 98% 40%;    /* sky-600 #0284c7 */
+    --primary-dark: 199 96% 32%;     /* sky-700 #0369a1 */
+    --primary-foreground: 0 0% 100%; /* blanc */
+    --ring: 199 89% 48%;             /* sky-500 focus ring */
+
+    /* --- Secondary (bouton secondaire) : sky-100 fond, sky-700 texte --- */
+    --secondary: 199 93% 96%;        /* sky-100 #e0f2fe */
+    --secondary-foreground: 199 96% 32%; /* sky-700 */
+    --accent: 199 92% 90%;           /* sky-200 #bae6fd (hover secondary/ghost) */
+    --accent-foreground: 199 96% 32%; /* sky-700 */
+
+    /* --- Fonds et contenu --- */
+    --background: 240 5% 96%;        /* gray-100 #f4f4f5 fond de page */
+    --foreground: 240 3% 20%;        /* #343343 texte principal */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card-foreground: 240 3% 20%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 10%;
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 40%;
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 10%;
-    --destructive: 0 84% 60%;
+    --popover-foreground: 240 3% 20%;
+
+    /* --- Neutre / muted (bouton outline, zones atténuées) --- */
+    --muted: 240 5% 96%;             /* gray-100 #f4f4f5 */
+    --muted-hover: 240 9% 91%;       /* gray-200 #e4e4e7 */
+    --muted-foreground: 240 4% 46%;  /* gray-500 #71717a */
+
+    /* --- Bordures et champs --- */
+    --border: 240 9% 84%;             /* gray-300 #d4d4d8 */
+    --input: 240 9% 84%;
+
+    /* --- Destructive --- */
+    --destructive: 0 84% 60%;        /* red-500 #ef4444 */
+    --destructive-hover: 0 72% 51%;  /* red-600 #dc2626 */
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
-    --ring: 204 100% 18%;
-    --radius: 0.5rem;
+
+    --radius: 0.25rem;
   }
 
   * {
@@ -37,7 +54,8 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Sarabun', sans-serif;
+    font-family: var(--sgdf-font-body);
+    line-height: 1.5;
   }
 
   h1,
@@ -46,20 +64,32 @@
   h4,
   h5,
   h6 {
-    font-family: 'Caveat Brush', cursive;
-    font-weight: 400;
+    font-family: var(--sgdf-font-heading);
   }
 
   h1 {
-    @apply text-5xl;
+    font-size: var(--sgdf-font-size-x-large);
+    font-weight: var(--sgdf-font-weight-bold);
   }
 
   h2 {
-    @apply text-4xl;
+    font-size: var(--sgdf-font-size-large);
+    font-weight: var(--sgdf-font-weight-semibold);
   }
 
   h3 {
-    @apply text-3xl;
+    font-size: var(--sgdf-font-size-small);
+    font-weight: var(--sgdf-font-weight-light);
+  }
+
+  h4, h5, h6 {
+    font-size: var(--sgdf-font-size-medium);
+    font-weight: var(--sgdf-font-weight-semibold);
+  }
+
+  p {
+    font-size: var(--sgdf-font-size-medium);
+    font-weight: var(--sgdf-font-weight-normal);
   }
 
   /* Titres de l’éditeur rich text (contenu atelier) en Sarabun, pas Caveat */
@@ -67,7 +97,7 @@
   .prose-editor-headings h2,
   .prose-editor-headings h3,
   .prose-editor-headings h4 {
-    font-family: 'Sarabun', sans-serif;
+    font-family: var(--sgdf-font-body);
   }
 
   /* Tableaux en vue lecture (fiche atelier) : bordures toujours visibles */
@@ -90,14 +120,21 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg font-medium transition-colors;
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md font-medium transition-colors duration-150;
   }
 
   .card-workshop {
-    @apply bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer;
+    @apply bg-card border border-border rounded-lg p-4 shadow-[var(--sgdf-shadow-small)] hover:shadow-[var(--sgdf-shadow-medium)] transition-shadow duration-150 cursor-pointer;
   }
 
   .tag-badge {
-    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium transition-colors;
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium transition-colors duration-150;
+  }
+
+  /* Conteneur page SGDF */
+  .sgdf-container {
+    max-width: 64rem;
+    margin-left: auto;
+    margin-right: auto;
   }
 }

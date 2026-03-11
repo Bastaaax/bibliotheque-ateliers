@@ -90,7 +90,7 @@ export function LoginForm() {
         </Button>
         <p className="text-center text-sm text-muted-foreground">
           Pas encore de compte ?{' '}
-          <Link to="/signup" className="text-primary hover:underline">
+          <Link to="/signup" className="text-primary-dark hover:underline">
             S&apos;inscrire
           </Link>
         </p>

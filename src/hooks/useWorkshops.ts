@@ -68,6 +68,9 @@ export function useWorkshops(filters?: WorkshopFilters) {
       if (filters?.participantsMax != null) {
         query = query.lte('participants_min', filters.participantsMax)
       }
+      if (filters?.objectiveText?.trim()) {
+        query = query.contains('objectives', [filters.objectiveText!.trim()])
+      }
 
       const { data, error } = await query
       if (error) throw error

@@ -1,10 +1,15 @@
 export type UserRole = 'admin' | 'contributor'
 
+/** Profil métier : directeur (direction de stage) ou formateur */
+export type ProfileType = 'director' | 'formateur'
+
 export interface Profile {
   id: string
   email: string
   full_name: string | null
   role: UserRole
+  /** Profil métier : directeur ou formateur (optionnel, défaut formateur) */
+  profile_type?: ProfileType
   avatar_url: string | null
   created_at: string
   updated_at: string
@@ -97,6 +102,8 @@ export interface WorkshopFilters {
   durationMax?: number
   participantsMin?: number
   participantsMax?: number
+  /** Texte d'un objectif pour filtrer les ateliers qui contiennent cet objectif */
+  objectiveText?: string
 }
 
 export interface WorkshopFormData {

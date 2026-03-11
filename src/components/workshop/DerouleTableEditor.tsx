@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Clock, Hourglass, User, Pencil, Check } from 'lucide-react'
+import { Clock, Hourglass, User, Pencil, Check, Plus, Trash2, FileText } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -7,6 +7,7 @@ import { WorkshopEditor } from './WorkshopEditor'
 import { cn } from '@/lib/utils'
 
 export interface DerouleSection {
+  type: 'section'
   id: string
   title: string
   time: string
@@ -15,24 +16,60 @@ export interface DerouleSection {
   content: string
 }
 
+export interface DerouleRichtextBlock {
+  type: 'richtext'
+  id: string
+  content: string
+}
+
+export type DerouleBlock = DerouleSection | DerouleRichtextBlock
+
 export interface DerouleData {
   type: 'deroule'
   sections: DerouleSection[]
+  blocks?: DerouleBlock[]
 }
 
 const DEFAULT_SECTIONS: DerouleSection[] = [
-  { id: 'intro', title: 'INTRODUCTION', time: '0h00', duration: "10'", who: '', content: '' },
-  { id: 'experimentation', title: 'EXPÉRIMENTATION', time: '', duration: '', who: '', content: '' },
-  { id: 'analyse', title: 'ANALYSE', time: '', duration: '', who: '', content: '' },
-  { id: 'conclusion', title: 'CONCLUSION', time: '', duration: '', who: '', content: '' },
+  { type: 'section', id: 'intro', title: 'INTRODUCTION', time: '0h00', duration: "10'", who: '', content: '' },
+  { type: 'section', id: 'experimentation', title: 'EXPÉRIMENTATION', time: '', duration: '', who: '', content: '' },
+  { type: 'section', id: 'analyse', title: 'ANALYSE', time: '', duration: '', who: '', content: '' },
+  { type: 'section', id: 'conclusion', title: 'CONCLUSION', time: '', duration: '', who: '', content: '' },
 ]
+
+function toSection(raw: { id?: string; title?: string; time?: string; duration?: string; who?: string; content?: string }): DerouleSection {
+  return {
+    type: 'section',
+    id: raw.id ?? '',
+    title: raw.title ?? '',
+    time: raw.time ?? '',
+    duration: raw.duration ?? '',
+    who: raw.who ?? '',
+    content: raw.content ?? '',
+  }
+}
+
+function getBlocksFromData(data: { sections?: DerouleSection[]; blocks?: DerouleBlock[] }): DerouleBlock[] {
+  if (Array.isArray(data.blocks) && data.blocks.length > 0) {
+    return data.blocks.map((b) => {
+      if (b.type === 'richtext') return b
+      return toSection(b)
+    })
+  }
+  if (Array.isArray(data.sections) && data.sections.length > 0) {
+    return data.sections.map((s) => toSection(s))
+  }
+  return DEFAULT_SECTIONS.map((s) => ({ ...s }))
+}
 
 function parseContent(value: string): DerouleData | null {
   if (!value?.trim()) return null
   try {
-    const data = JSON.parse(value) as { type?: string; sections?: DerouleSection[]; rows?: unknown[] }
-    if (data?.type === 'deroule' && Array.isArray(data.sections) && data.sections.length > 0) {
-      return data as DerouleData
+    const data = JSON.parse(value) as { type?: string; sections?: DerouleSection[]; blocks?: DerouleBlock[]; rows?: unknown[] }
+    if (data?.type === 'deroule' && (Array.isArray(data.sections) || Array.isArray(data.blocks))) {
+      const blocks = getBlocksFromData(data)
+      const sections = blocks.filter((b): b is DerouleSection => b.type === 'section') as DerouleSection[]
+      return { type: 'deroule', sections, blocks }
     }
     if (data?.type === 'deroule' && Array.isArray(data.rows)) {
       const rows = data.rows as { time: string; duration: string; program: string; who: string }[]
@@ -43,7 +80,7 @@ function parseContent(value: string): DerouleData | null {
         who: rows[i]?.who ?? '',
         content: rows[i]?.program ?? '',
       }))
-      return { type: 'deroule', sections }
+      return { type: 'deroule', sections, blocks: [...sections] }
     }
   } catch {
     // ignore
@@ -58,7 +95,8 @@ export function isDerouleContent(value: string): boolean {
 export function getDerouleData(value: string): DerouleData {
   const parsed = parseContent(value)
   if (parsed) return parsed
-  return { type: 'deroule', sections: DEFAULT_SECTIONS.map((s) => ({ ...s })) }
+  const sections = DEFAULT_SECTIONS.map((s) => ({ ...s }))
+  return { type: 'deroule', sections, blocks: [...sections] }
 }
 
 interface DerouleTableEditorProps {
@@ -70,9 +108,16 @@ interface DerouleTableEditorProps {
 
 const EDITOR_MIN_HEIGHT = 320
 
+function nextRichtextId(): string {
+  return `richtext-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+}
+
 export function DerouleTableEditor({ value = '', onChange, className, disabled }: DerouleTableEditorProps) {
   const [data, setData] = useState<DerouleData>(() => getDerouleData(value))
   const [activeSectionIndex, setActiveSectionIndex] = useState<number | null>(null)
+  const [activeRichtextId, setActiveRichtextId] = useState<string | null>(null)
+
+  const blocks = data.blocks ?? data.sections
 
   useEffect(() => {
     const parsed = parseContent(value)
@@ -86,7 +131,9 @@ export function DerouleTableEditor({ value = '', onChange, className, disabled }
   }, [value])
 
   const emit = useCallback(
-    (next: DerouleData) => {
+    (nextBlocks: DerouleBlock[]) => {
+      const sections = nextBlocks.filter((b): b is DerouleSection => b.type === 'section') as DerouleSection[]
+      const next: DerouleData = { type: 'deroule', sections, blocks: nextBlocks }
       setData(next)
       onChange(JSON.stringify(next))
     },
@@ -94,24 +141,101 @@ export function DerouleTableEditor({ value = '', onChange, className, disabled }
   )
 
   const updateSection = useCallback(
-    (index: number, field: keyof DerouleSection, cellValue: string) => {
-      const next = {
-        ...data,
-        sections: data.sections.map((s, i) =>
-          i === index ? { ...s, [field]: cellValue } : s
-        ),
-      }
-      emit(next)
+    (blockIndex: number, field: keyof DerouleSection, cellValue: string) => {
+      const block = blocks[blockIndex]
+      if (block?.type !== 'section') return
+      const nextBlocks = blocks.map((b, i) =>
+        i === blockIndex ? { ...b, [field]: cellValue } : b
+      ) as DerouleBlock[]
+      emit(nextBlocks)
     },
-    [data, emit]
+    [blocks, emit]
+  )
+
+  const insertRichtextBlock = useCallback(
+    (afterIndex: number) => {
+      const newBlock: DerouleRichtextBlock = { type: 'richtext', id: nextRichtextId(), content: '' }
+      const nextBlocks = [...blocks.slice(0, afterIndex + 1), newBlock, ...blocks.slice(afterIndex + 1)]
+      emit(nextBlocks)
+      setActiveRichtextId(newBlock.id)
+    },
+    [blocks, emit]
+  )
+
+  const removeRichtextBlock = useCallback(
+    (blockIndex: number) => {
+      const nextBlocks = blocks.filter((_, i) => i !== blockIndex)
+      emit(nextBlocks)
+      if (blocks[blockIndex]?.type === 'richtext' && (blocks[blockIndex] as DerouleRichtextBlock).id === activeRichtextId) {
+        setActiveRichtextId(null)
+      }
+    },
+    [blocks, emit, activeRichtextId]
+  )
+
+  const updateRichtextBlock = useCallback(
+    (blockIndex: number, content: string) => {
+      const block = blocks[blockIndex]
+      if (block?.type !== 'richtext') return
+      const nextBlocks = blocks.map((b, i) =>
+        i === blockIndex ? { ...b, content } : b
+      ) as DerouleBlock[]
+      emit(nextBlocks)
+    },
+    [blocks, emit]
   )
 
   return (
     <div className={cn('space-y-8', className)}>
       <p className="text-sm text-muted-foreground">
-        Remplissez chaque phase : heure de début, durée, qui anime, et le contenu en rich text (vous pouvez coller du contenu depuis Google Docs, Notion ou Word).
+        Remplissez chaque phase : heure de début, durée, qui anime, et le contenu en rich text. Vous pouvez insérer des blocs de texte libre entre les phases.
       </p>
-      {data.sections.map((section, index) => (
+      {blocks.map((block, blockIndex) => (
+        <div key={block.type === 'section' ? block.id : block.id}>
+          {block.type === 'richtext' ? (
+            <section className="rounded-xl border border-dashed border-border bg-muted/20 overflow-hidden">
+              <div className="border-b bg-muted/40 px-4 py-2 flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Bloc de texte libre
+                </span>
+                {!disabled && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeRichtextBlock(blockIndex)}
+                    className="text-muted-foreground hover:text-destructive"
+                    aria-label="Supprimer ce bloc"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              <div className="p-4">
+                {disabled ? (
+                  <div
+                    className={cn(
+                      'min-h-[80px] prose prose-sm max-w-none dark:prose-invert',
+                      !block.content && 'text-muted-foreground'
+                    )}
+                    dangerouslySetInnerHTML={{ __html: block.content || '<p>—</p>' }}
+                  />
+                ) : (
+                  <WorkshopEditor
+                    value={block.content}
+                    onChange={(html) => updateRichtextBlock(blockIndex, html)}
+                    placeholder="Rédigez ici… Tapez « / » pour les options."
+                    contentMinHeight={120}
+                  />
+                )}
+              </div>
+            </section>
+          ) : (
+        (() => {
+          const section = block as DerouleSection
+          return (
+            <>
         <section
           key={section.id}
           className="rounded-xl border border-border bg-card overflow-hidden"
@@ -130,7 +254,7 @@ export function DerouleTableEditor({ value = '', onChange, className, disabled }
                 </Label>
                 <Input
                   value={section.time}
-                  onChange={(e) => updateSection(index, 'time', e.target.value)}
+                  onChange={(e) => updateSection(blockIndex, 'time', e.target.value)}
                   disabled={disabled}
                   placeholder="0h00"
                   className="bg-background"
@@ -143,7 +267,7 @@ export function DerouleTableEditor({ value = '', onChange, className, disabled }
                 </Label>
                 <Input
                   value={section.duration}
-                  onChange={(e) => updateSection(index, 'duration', e.target.value)}
+                  onChange={(e) => updateSection(blockIndex, 'duration', e.target.value)}
                   disabled={disabled}
                   placeholder="10'"
                   className="bg-background"
@@ -156,7 +280,7 @@ export function DerouleTableEditor({ value = '', onChange, className, disabled }
                 </Label>
                 <Input
                   value={section.who}
-                  onChange={(e) => updateSection(index, 'who', e.target.value)}
+                  onChange={(e) => updateSection(blockIndex, 'who', e.target.value)}
                   disabled={disabled}
                   placeholder="Animateur, intervenant…"
                   className="bg-background"
@@ -181,7 +305,7 @@ export function DerouleTableEditor({ value = '', onChange, className, disabled }
                     '—'
                   )}
                 </div>
-              ) : activeSectionIndex === index ? (
+              ) : activeSectionIndex === blockIndex ? (
                 <div className="space-y-2">
                   <div className="flex items-center justify-end gap-2">
                     <Button
@@ -198,8 +322,8 @@ export function DerouleTableEditor({ value = '', onChange, className, disabled }
                   <WorkshopEditor
                     key={`editor-${section.id}`}
                     value={section.content}
-                    onChange={(html) => updateSection(index, 'content', html)}
-                    placeholder={`Rédigez le contenu de la phase ${section.title}…`}
+                    onChange={(html) => updateSection(blockIndex, 'content', html)}
+                    placeholder={`Rédigez le contenu de la phase ${section.title}… Tapez « / » pour les options (titres, listes, citation, tableau…).`}
                     contentMinHeight={EDITOR_MIN_HEIGHT}
                   />
                 </div>
@@ -207,8 +331,8 @@ export function DerouleTableEditor({ value = '', onChange, className, disabled }
                 <div
                   role="button"
                   tabIndex={0}
-                  onClick={() => setActiveSectionIndex(index)}
-                  onKeyDown={(e) => e.key === 'Enter' && setActiveSectionIndex(index)}
+                  onClick={() => setActiveSectionIndex(blockIndex)}
+                  onKeyDown={(e) => e.key === 'Enter' && setActiveSectionIndex(blockIndex)}
                   className={cn(
                     'min-h-[120px] rounded-lg border border-dashed border-muted-foreground/30 bg-muted/10 px-3 py-4 text-sm',
                     'cursor-pointer transition-colors hover:border-primary/40 hover:bg-muted/20 focus:outline-none focus:ring-2 focus:ring-ring'
@@ -230,6 +354,23 @@ export function DerouleTableEditor({ value = '', onChange, className, disabled }
             </div>
           </div>
         </section>
+              {!disabled && (
+                <div className="flex justify-center py-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => insertRichtextBlock(blockIndex)}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Ajouter un bloc de texte ici
+                  </Button>
+                </div>
+              )}
+            </>
+          ); })() )}
+        </div>
       ))}
     </div>
   )

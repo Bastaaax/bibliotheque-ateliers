@@ -14,7 +14,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <Link to="/" className="font-heading text-2xl font-bold text-primary">
+          <Link to="/" className="font-heading text-2xl font-bold text-sgdf-text-primary">
             Bibliothèque d&apos;Ateliers
           </Link>
           <CardTitle className="font-heading text-2xl">Connexion</CardTitle>

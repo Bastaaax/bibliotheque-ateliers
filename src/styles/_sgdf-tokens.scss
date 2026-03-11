@@ -1,0 +1,142 @@
+/**
+ * Design System — Style Digiform SGDF
+ * Tokens CSS pour cohérence UI (couleurs, typo, espacements, radius, ombres, transitions)
+ */
+
+:root {
+  /* ---- 1. Typographie ---- */
+  --sgdf-font-heading: 'Raleway', sans-serif;
+  --sgdf-font-body: 'Sarabun', sans-serif;
+
+  --sgdf-font-size-2x-small: 0.625rem;
+  --sgdf-font-size-x-small: 0.75rem;
+  --sgdf-font-size-small: 0.875rem;
+  --sgdf-font-size-medium: 1rem;
+  --sgdf-font-size-large: 1.25rem;
+  --sgdf-font-size-x-large: 1.5rem;
+  --sgdf-font-size-2x-large: 2.25rem;
+  --sgdf-font-size-3x-large: 3rem;
+  --sgdf-font-size-4x-large: 4.5rem;
+
+  --sgdf-font-weight-light: 300;
+  --sgdf-font-weight-normal: 400;
+  --sgdf-font-weight-semibold: 500;
+  --sgdf-font-weight-bold: 700;
+
+  --sgdf-line-height-denser: 1;
+  --sgdf-line-height-dense: 1.4;
+  --sgdf-line-height-normal: 1.8;
+  --sgdf-line-height-loose: 2.2;
+  --sgdf-line-height-looser: 2.6;
+
+  --sgdf-letter-spacing-denser: -0.03em;
+  --sgdf-letter-spacing-dense: -0.015em;
+  --sgdf-letter-spacing-normal: normal;
+  --sgdf-letter-spacing-loose: 0.075em;
+  --sgdf-letter-spacing-looser: 0.15em;
+
+  /* ---- 2. Couleurs ---- */
+
+  /* Marque / Header (bleu marine) */
+  --sgdf-color-default: #003a5d;
+  --sgdf-color-default-hover: #0b2b40;
+
+  /* Primary interactive (sky — boutons, liens, focus) */
+  --sgdf-color-primary-500: #0ea5e9;
+  --sgdf-color-primary-600: #0284c7;
+  --sgdf-color-primary-700: #0369a1;
+  --sgdf-color-primary-100: #e0f2fe;
+  --sgdf-color-primary-200: #bae6fd;
+
+  --sgdf-color-success-500: #22c55e;
+  --sgdf-color-success-600: #16a34a;
+
+  --sgdf-color-warning-500: #f59e0b;
+  --sgdf-color-warning-600: #d97706;
+
+  --sgdf-color-danger-500: #ef4444;
+  --sgdf-color-danger-600: #dc2626;
+
+  --sgdf-color-lj: #ff8300;
+  --sgdf-color-sg: #0077b3;
+  --sgdf-color-pc: #d03f15;
+  --sgdf-color-compagnon: #007254;
+  --sgdf-color-indigo: #6e74aa;
+  --sgdf-color-farfadet: #65bc99;
+
+  /* Textes */
+  --sgdf-color-text-default: #343343;
+  --sgdf-color-text-primary: #003a5d;
+  --sgdf-color-text-light: #71717a;
+  --sgdf-color-text-inverted: #ffffff;
+  --sgdf-color-text-disabled: #a1a1aa;
+
+  --sgdf-color-bg-primary: #003a5d;
+  --sgdf-color-bg-primary-hovered: #0b2b40;
+  --sgdf-color-bg-default: #ffffff;
+  --sgdf-color-bg-neutral: #f9f9f9;
+  --sgdf-color-bg-neutral-alt: #f4f4f5;
+  --sgdf-color-bg-neutral-active: #e4e4e7;
+  --sgdf-color-bg-secondary: #e0f2fe;
+  --sgdf-color-bg-secondary-alt: #bae6fd;
+
+  --sgdf-color-gray-50: #f9f9f9;
+  --sgdf-color-gray-100: #f4f4f5;
+  --sgdf-color-gray-200: #e4e4e7;
+  --sgdf-color-gray-300: #d4d4d8;
+  --sgdf-color-gray-400: #a1a1aa;
+  --sgdf-color-gray-500: #71717a;
+  --sgdf-color-gray-600: #52525b;
+  --sgdf-color-gray-700: #3f3f46;
+  --sgdf-color-gray-800: #27272a;
+  --sgdf-color-gray-900: #18181b;
+
+  /* ---- 3. Espacements ---- */
+  --sgdf-spacing-3x-small: 0.125rem;
+  --sgdf-spacing-2x-small: 0.25rem;
+  --sgdf-spacing-x-small: 0.5rem;
+  --sgdf-spacing-small: 0.75rem;
+  --sgdf-spacing-medium: 1rem;
+  --sgdf-spacing-large: 1.25rem;
+  --sgdf-spacing-x-large: 1.75rem;
+  --sgdf-spacing-2x-large: 2.25rem;
+  --sgdf-spacing-3x-large: 3rem;
+  --sgdf-spacing-4x-large: 4.5rem;
+
+  /* ---- 4. Border radius ---- */
+  --sgdf-border-radius-small: 0.1875rem;
+  --sgdf-border-radius-medium: 0.25rem;
+  --sgdf-border-radius-large: 0.5rem;
+  --sgdf-border-radius-x-large: 1rem;
+  --sgdf-border-radius-circle: 50%;
+  --sgdf-border-radius-pill: 9999px;
+
+  /* ---- 5. Ombres ---- */
+  --sgdf-shadow-x-small: 0 1px 2px hsla(240, 4%, 46%, 0.06);
+  --sgdf-shadow-small: 0 1px 2px hsla(240, 4%, 46%, 0.12);
+  --sgdf-shadow-medium: 0 2px 4px hsla(240, 4%, 46%, 0.12);
+  --sgdf-shadow-large: 0 2px 8px hsla(240, 4%, 46%, 0.12);
+  --sgdf-shadow-x-large: 0 4px 16px hsla(240, 4%, 46%, 0.12);
+
+  /* ---- 6. Transitions ---- */
+  --sgdf-transition-x-fast: 50ms;
+  --sgdf-transition-fast: 0.15s;
+  --sgdf-transition-medium: 0.25s;
+  --sgdf-transition-slow: 0.5s;
+  --sgdf-transition-x-slow: 1s;
+  --sgdf-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ---- 7. Z-index ---- */
+  --sgdf-z-index-side-panel: 600;
+  --sgdf-z-index-drawer: 700;
+  --sgdf-z-index-dialog: 800;
+  --sgdf-z-index-dropdown: 900;
+  --sgdf-z-index-toast: 950;
+  --sgdf-z-index-tooltip: 1000;
+
+  /* Overlay modales/drawers */
+  --sgdf-overlay: hsla(240, 4%, 46%, 0.33);
+
+  /* Focus ring (sky) */
+  --sgdf-focus-ring: 0 0 0 3px rgba(14, 165, 233, 0.4);
+}

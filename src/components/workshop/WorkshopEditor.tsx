@@ -474,7 +474,7 @@ function BubbleToolbar({ editor }: { editor: Editor }) {
 function WorkshopEditorInner({
   value = '',
   onChange,
-  placeholder = "Écrire ici… Tapez / pour les commandes",
+  placeholder = "Écrire ici… Tapez « / » pour afficher les options de bloc (titres, listes, citation, tableau…)",
   className,
   disabled = false,
   contentMinHeight = 200,
@@ -555,7 +555,7 @@ function WorkshopEditorInner({
           '[&_.ProseMirror_table]:border-collapse [&_.ProseMirror_table]:border [&_.ProseMirror_table]:border-border [&_.ProseMirror_table]:w-full',
           '[&_.ProseMirror_th]:border [&_.ProseMirror_th]:border-border [&_.ProseMirror_th]:bg-muted [&_.ProseMirror_th]:p-2 [&_.ProseMirror_th]:text-left',
           '[&_.ProseMirror_td]:border [&_.ProseMirror_td]:border-border [&_.ProseMirror_td]:p-2',
-          '[&_.ProseMirror_a]:text-primary [&_.ProseMirror_a]:underline',
+          '[&_.ProseMirror_a]:text-primary-dark [&_.ProseMirror_a]:underline',
           '[&_.ProseMirror_h1]:font-body [&_.ProseMirror_h2]:font-body [&_.ProseMirror_h3]:font-body [&_.ProseMirror_h4]:font-body'
         )}
         style={{ ['--editor-min-height' as string]: `${contentMinHeight}px` } as React.CSSProperties}

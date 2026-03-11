@@ -14,6 +14,8 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { DerouleTableEditor } from './DerouleTableEditor'
+import { ObjectiveInputWithSuggestions } from './ObjectiveInputWithSuggestions'
+import { useUniqueObjectives } from '@/hooks/useObjectives'
 import type { WorkshopFormData } from '@/types'
 import type { Tag, TagCategory } from '@/types'
 import { Plus, X } from 'lucide-react'
@@ -49,6 +51,7 @@ interface WorkshopFormProps {
   onSubmit: (data: WorkshopFormData) => void | Promise<void>
   isLoading?: boolean
   submitLabel?: string
+  submitVariant?: 'default' | 'brand'
 }
 
 const emptyMaterial = ''
@@ -61,6 +64,7 @@ export function WorkshopForm({
   onSubmit,
   isLoading = false,
   submitLabel = 'Enregistrer',
+  submitVariant = 'brand',
 }: WorkshopFormProps) {
   const [materials, setMaterials] = useState<string[]>(
     defaultValues?.materials?.length ? [...defaultValues.materials, emptyMaterial] : [emptyMaterial]
@@ -115,6 +119,7 @@ export function WorkshopForm({
       return next
     })
 
+  const { objectives: existingObjectives } = useUniqueObjectives()
   const addObjective = () => setObjectives((prev) => [...prev, emptyObjective])
   const removeObjective = (i: number) =>
     setObjectives((prev) => prev.filter((_, idx) => idx !== i))
@@ -192,25 +197,6 @@ export function WorkshopForm({
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="content"
-          render={({ field }) => (
-            <FormItem className="space-y-2">
-              <div>
-                <FormLabel className="text-base font-medium">Contenu détaillé</FormLabel>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  Tableau déroulé : heure, durée, programme, qui. Collez du contenu depuis Google Docs, Notion ou Word. Ajoutez ou supprimez des lignes.
-                </p>
-              </div>
-              <FormControl>
-                <DerouleTableEditor value={field.value ?? ''} onChange={field.onChange} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         <div className="grid gap-4 md:grid-cols-3">
           <FormField
             control={form.control}
@@ -277,26 +263,20 @@ export function WorkshopForm({
 
         <div className="space-y-2">
           <FormLabel>Objectifs</FormLabel>
-          <FormDescription>Liste des objectifs pédagogiques</FormDescription>
+          <FormDescription>
+            Saisissez un objectif ou choisissez parmi les objectifs existants (suggestions selon les mots tapés).
+          </FormDescription>
           <div className="space-y-2">
             {objectives.map((obj, i) => (
-              <div key={i} className="flex gap-2">
-                <Input
-                  value={obj}
-                  onChange={(e) => updateObjective(i, e.target.value)}
-                  placeholder={`Objectif ${i + 1}`}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeObjective(i)}
-                  disabled={objectives.length <= 1}
-                  aria-label="Supprimer"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+              <ObjectiveInputWithSuggestions
+                key={i}
+                value={obj}
+                onChange={(v) => updateObjective(i, v)}
+                placeholder={`Objectif ${i + 1}`}
+                existingObjectives={existingObjectives}
+                onRemove={() => removeObjective(i)}
+                canRemove={objectives.length > 1}
+              />
             ))}
             <Button type="button" variant="outline" size="sm" onClick={addObjective}>
               <Plus className="mr-2 h-4 w-4" />
@@ -304,6 +284,25 @@ export function WorkshopForm({
             </Button>
           </div>
         </div>
+
+        <FormField
+          control={form.control}
+          name="content"
+          render={({ field }) => (
+            <FormItem className="space-y-2">
+              <div>
+                <FormLabel className="text-base font-medium">Contenu détaillé</FormLabel>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Tableau déroulé : heure, durée, programme, qui. Collez du contenu depuis Google Docs, Notion ou Word. Ajoutez ou supprimez des lignes.
+                </p>
+              </div>
+              <FormControl>
+                <DerouleTableEditor value={field.value ?? ''} onChange={field.onChange} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="space-y-2">
           <FormLabel>Matériel</FormLabel>
@@ -412,7 +411,7 @@ export function WorkshopForm({
         />
 
         <div className="flex gap-4">
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" variant={submitVariant} disabled={isLoading}>
             {isLoading ? 'Enregistrement...' : submitLabel}
           </Button>
         </div>

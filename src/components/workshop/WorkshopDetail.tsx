@@ -16,10 +16,19 @@ import {
   Users,
   Download,
   FileText,
+  FileDown,
+  FileType,
+  ExternalLink,
 } from 'lucide-react'
 import type { Workshop } from '@/types'
 import { WORKSHOP_ATTACHMENTS_BUCKET } from '@/utils/constants'
 import { DerouleTableView } from './DerouleTableView'
+import {
+  getWorkshopPrintHtml,
+  getWorkshopDocxBlob,
+  getGoogleDocCreateUrl,
+  getWorkshopPlainText,
+} from '@/utils/workshopExport'
 
 interface WorkshopDetailProps {
   workshopId: string
@@ -33,6 +42,7 @@ export function WorkshopDetail({ workshopId }: WorkshopDetailProps) {
   const { toast } = useToast()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [exporting, setExporting] = useState<'pdf' | 'word' | null>(null)
 
   const canEdit =
     profile?.id === workshop?.creator_id || isAdmin
@@ -69,6 +79,60 @@ export function WorkshopDetail({ workshopId }: WorkshopDetailProps) {
     return data.publicUrl
   }
 
+  const handleExportPdf = () => {
+    const html = getWorkshopPrintHtml(w)
+    const win = window.open('', '_blank')
+    if (!win) return
+    win.document.write(html)
+    win.document.close()
+    win.focus()
+    setTimeout(() => {
+      win.print()
+      win.close()
+    }, 300)
+  }
+
+  const handleExportWord = async () => {
+    setExporting('word')
+    try {
+      const blob = await getWorkshopDocxBlob(w)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${w.title.replace(/[^\w\s-]/g, '').replace(/\s+/g, '-')}.docx`
+      a.click()
+      URL.revokeObjectURL(url)
+      toast({ title: 'Téléchargement', description: 'Le fichier Word a été téléchargé.', variant: 'default' })
+    } catch (err) {
+      toast({
+        title: 'Erreur',
+        description: err instanceof Error ? err.message : 'Impossible de générer le fichier Word.',
+        variant: 'destructive',
+      })
+    } finally {
+      setExporting(null)
+    }
+  }
+
+  const handleExportGoogleDoc = async () => {
+    try {
+      await navigator.clipboard.writeText(getWorkshopPlainText(w))
+      toast({
+        title: 'Contenu copié',
+        description: 'Le contenu a été copié. Collez-le dans votre nouveau document Google.',
+        variant: 'default',
+      })
+      window.open(getGoogleDocCreateUrl(w), '_blank', 'noopener,noreferrer')
+    } catch {
+      window.open(getGoogleDocCreateUrl(w), '_blank', 'noopener,noreferrer')
+      toast({
+        title: 'Ouvrir Google Docs',
+        description: 'Un nouvel onglet a été ouvert. Collez le contenu manuellement si besoin.',
+        variant: 'default',
+      })
+    }
+  }
+
   if (isLoading || !workshop) {
     return <div className="p-8 text-center text-muted-foreground">Chargement...</div>
   }
@@ -99,13 +163,13 @@ export function WorkshopDetail({ workshopId }: WorkshopDetailProps) {
         </div>
         {canEdit && (
           <div className="flex gap-2">
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="brand" size="sm">
               <Link to={`/workshops/${w.id}/edit`}>
                 <Edit className="mr-2 h-4 w-4" />
                 Modifier
               </Link>
             </Button>
-            <Button variant="outline" size="sm" onClick={handleDuplicate}>
+            <Button variant="secondary" size="sm" onClick={handleDuplicate}>
               <Copy className="mr-2 h-4 w-4" />
               Dupliquer
             </Button>
@@ -213,7 +277,7 @@ export function WorkshopDetail({ workshopId }: WorkshopDetailProps) {
                   href={getAttachmentUrl(att.file_path)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary hover:underline"
+                  className="text-primary-dark hover:underline"
                 >
                   {att.file_name}
                 </a>
@@ -236,6 +300,36 @@ export function WorkshopDetail({ workshopId }: WorkshopDetailProps) {
           </ul>
         </section>
       )}
+
+      <section className="rounded-xl border border-border bg-card">
+        <div className="border-b px-5 py-3">
+          <h2 className="font-heading text-lg font-semibold text-muted-foreground flex items-center gap-2">
+            <FileDown className="h-5 w-5" />
+            Exporter la fiche
+          </h2>
+        </div>
+        <div className="px-5 py-4 flex flex-wrap gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={handleExportPdf} className="gap-2">
+            <FileType className="h-4 w-4" />
+            PDF (impression)
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleExportWord}
+            disabled={exporting === 'word'}
+            className="gap-2"
+          >
+            <FileDown className="h-4 w-4" />
+            {exporting === 'word' ? 'Génération…' : 'Word (.docx)'}
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={handleExportGoogleDoc} className="gap-2">
+            <ExternalLink className="h-4 w-4" />
+            Google Doc (copier + ouvrir)
+          </Button>
+        </div>
+      </section>
 
       <ConfirmDialog
         open={deleteOpen}
