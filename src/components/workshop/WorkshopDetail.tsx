@@ -25,6 +25,7 @@ import { WORKSHOP_ATTACHMENTS_BUCKET } from '@/utils/constants'
 import { DerouleTableView } from './DerouleTableView'
 import {
   getWorkshopPrintHtml,
+  getFicheSynthesePrintHtml,
   getWorkshopDocxBlob,
   getGoogleDocCreateUrl,
   getWorkshopPlainText,
@@ -80,7 +81,8 @@ export function WorkshopDetail({ workshopId }: WorkshopDetailProps) {
   }
 
   const handleExportPdf = () => {
-    const html = getWorkshopPrintHtml(w)
+    if (!workshop) return
+    const html = getWorkshopPrintHtml(workshop as Workshop)
     const win = window.open('', '_blank')
     if (!win) return
     win.document.write(html)
@@ -93,13 +95,14 @@ export function WorkshopDetail({ workshopId }: WorkshopDetailProps) {
   }
 
   const handleExportWord = async () => {
+    if (!workshop) return
     setExporting('word')
     try {
-      const blob = await getWorkshopDocxBlob(w)
+      const blob = await getWorkshopDocxBlob(workshop as Workshop)
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `${w.title.replace(/[^\w\s-]/g, '').replace(/\s+/g, '-')}.docx`
+      a.download = `${(workshop as Workshop).title.replace(/[^\w\s-]/g, '').replace(/\s+/g, '-')}.docx`
       a.click()
       URL.revokeObjectURL(url)
       toast({ title: 'Téléchargement', description: 'Le fichier Word a été téléchargé.', variant: 'default' })
@@ -114,17 +117,32 @@ export function WorkshopDetail({ workshopId }: WorkshopDetailProps) {
     }
   }
 
+  const handleExportFicheSynthesePdf = () => {
+    if (!workshop) return
+    const html = getFicheSynthesePrintHtml(workshop as Workshop)
+    const win = window.open('', '_blank')
+    if (!win) return
+    win.document.write(html)
+    win.document.close()
+    win.focus()
+    setTimeout(() => {
+      win.print()
+      win.close()
+    }, 300)
+  }
+
   const handleExportGoogleDoc = async () => {
+    if (!workshop) return
     try {
-      await navigator.clipboard.writeText(getWorkshopPlainText(w))
+      await navigator.clipboard.writeText(getWorkshopPlainText(workshop as Workshop))
       toast({
         title: 'Contenu copié',
         description: 'Le contenu a été copié. Collez-le dans votre nouveau document Google.',
         variant: 'default',
       })
-      window.open(getGoogleDocCreateUrl(w), '_blank', 'noopener,noreferrer')
+      window.open(getGoogleDocCreateUrl(workshop as Workshop), '_blank', 'noopener,noreferrer')
     } catch {
-      window.open(getGoogleDocCreateUrl(w), '_blank', 'noopener,noreferrer')
+      window.open(getGoogleDocCreateUrl(workshop as Workshop), '_blank', 'noopener,noreferrer')
       toast({
         title: 'Ouvrir Google Docs',
         description: 'Un nouvel onglet a été ouvert. Collez le contenu manuellement si besoin.',
@@ -333,6 +351,39 @@ export function WorkshopDetail({ workshopId }: WorkshopDetailProps) {
           </ul>
         </section>
       )}
+
+      <section className="rounded-xl border border-border bg-card">
+        <div className="border-b px-5 py-3 flex items-center justify-between">
+          <h2 className="font-heading text-lg font-semibold text-muted-foreground flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Fiche synthèse
+          </h2>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleExportFicheSynthesePdf}
+            className="gap-2 shrink-0"
+          >
+            <FileType className="h-4 w-4" />
+            Exporter en PDF
+          </Button>
+        </div>
+        <div className="px-5 py-4">
+          {w.fiche_synthese?.trim() ? (
+            <div
+              className="workshop-content-view prose prose-editor-headings prose-sm max-w-none dark:prose-invert
+                prose-p:my-2 prose-ul:my-2 prose-li:my-0.5
+                [&_mark]:rounded [&_span[style*='background']]:rounded"
+              dangerouslySetInnerHTML={{ __html: w.fiche_synthese }}
+            />
+          ) : (
+            <p className="text-muted-foreground text-sm italic">
+              Aucune fiche synthèse rédigée. Cliquez sur Modifier pour en ajouter une.
+            </p>
+          )}
+        </div>
+      </section>
 
       <section className="rounded-xl border border-border bg-card">
         <div className="border-b px-5 py-3">

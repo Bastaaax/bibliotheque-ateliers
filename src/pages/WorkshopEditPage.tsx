@@ -36,6 +36,7 @@ export default function WorkshopEditPage() {
           objectives: workshop.objectives ?? [],
           resource_links: workshop.resource_links ?? [],
           tagIds: (workshop.tags ?? []).map((t) => t.id),
+          fiche_synthese: workshop.fiche_synthese ?? undefined,
         }
       : undefined
     : workshop
@@ -51,6 +52,7 @@ export default function WorkshopEditPage() {
           objectives: workshop.objectives ?? [],
           resource_links: workshop.resource_links ?? [],
           tagIds: (workshop.tags ?? []).map((t) => t.id),
+          fiche_synthese: workshop.fiche_synthese ?? undefined,
         }
       : undefined
 

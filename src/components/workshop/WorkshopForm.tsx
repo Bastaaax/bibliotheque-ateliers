@@ -14,6 +14,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { DerouleTableEditor } from './DerouleTableEditor'
+import { WorkshopEditor } from './WorkshopEditor'
 import { ObjectiveInputWithSuggestions } from './ObjectiveInputWithSuggestions'
 import { useUniqueObjectives } from '@/hooks/useObjectives'
 import type { WorkshopFormData, WorkshopResourceLink } from '@/types'
@@ -41,6 +42,7 @@ const workshopSchema = z.object({
   materials: z.array(z.string()).default([]),
   objectives: z.array(z.string()).default([]),
   resource_links: z.array(resourceLinkSchema).default([]),
+  fiche_synthese: z.string().optional().nullable(),
   tagIds: z.array(z.string()).default([]),
 })
 
@@ -91,6 +93,7 @@ export function WorkshopForm({
       materials: defaultValues?.materials ?? [],
       objectives: defaultValues?.objectives ?? [],
       resource_links: defaultValues?.resource_links ?? [],
+      fiche_synthese: defaultValues?.fiche_synthese ?? null,
       tagIds: defaultValues?.tagIds ?? [],
     },
   })
@@ -319,7 +322,35 @@ export function WorkshopForm({
                 </p>
               </div>
               <FormControl>
-                <DerouleTableEditor value={field.value ?? ''} onChange={field.onChange} />
+                <DerouleTableEditor
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  workshopDurationMinutes={form.watch('duration_minutes')}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="fiche_synthese"
+          render={({ field }) => (
+            <FormItem className="space-y-2">
+              <div>
+                <FormLabel className="text-base font-medium">Fiche synthèse</FormLabel>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Synthèse à remettre aux stagiaires (rich text). Imprimable depuis la fiche atelier.
+                </p>
+              </div>
+              <FormControl>
+                <WorkshopEditor
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  placeholder="Rédigez la fiche synthèse…"
+                  contentMinHeight={150}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

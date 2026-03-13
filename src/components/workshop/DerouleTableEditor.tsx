@@ -99,11 +99,25 @@ export function getDerouleData(value: string): DerouleData {
   return { type: 'deroule', sections, blocks: [...sections] }
 }
 
+/** Parse duration string (e.g. "10'", "15", "1h", "1h30") to minutes. */
+function parseDurationToMinutes(s: string): number {
+  if (!s?.trim()) return 0
+  const t = s.trim()
+  const hm = t.match(/^(\d+)\s*h\s*(\d*)\s*$/i)
+  if (hm) return parseInt(hm[1], 10) * 60 + parseInt(hm[2] || '0', 10)
+  const min = t.match(/^(\d+)\s*['']?\s*(?:min)?$/i)
+  if (min) return parseInt(min[1], 10)
+  const num = parseInt(t, 10)
+  return Number.isNaN(num) ? 0 : num
+}
+
 interface DerouleTableEditorProps {
   value?: string
   onChange: (content: string) => void
   className?: string
   disabled?: boolean
+  /** Durée totale de l'atelier (min) pour comparer au cumul des sections */
+  workshopDurationMinutes?: number | null
 }
 
 const EDITOR_MIN_HEIGHT = 320
@@ -112,7 +126,7 @@ function nextRichtextId(): string {
   return `richtext-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
-export function DerouleTableEditor({ value = '', onChange, className, disabled }: DerouleTableEditorProps) {
+export function DerouleTableEditor({ value = '', onChange, className, disabled, workshopDurationMinutes }: DerouleTableEditorProps) {
   const [data, setData] = useState<DerouleData>(() => getDerouleData(value))
   const [activeSectionIndex, setActiveSectionIndex] = useState<number | null>(null)
   const [activeRichtextId, setActiveRichtextId] = useState<string | null>(null)
@@ -185,11 +199,33 @@ export function DerouleTableEditor({ value = '', onChange, className, disabled }
     [blocks, emit]
   )
 
+  const sectionsOnly = blocks.filter((b): b is DerouleSection => b.type === 'section')
+  const totalMinutes = sectionsOnly.reduce((sum, s) => sum + parseDurationToMinutes(s.duration), 0)
+  const exceeds = workshopDurationMinutes != null && workshopDurationMinutes > 0 && totalMinutes > workshopDurationMinutes
+  const overflow = exceeds ? totalMinutes - workshopDurationMinutes : 0
+
   return (
     <div className={cn('space-y-8', className)}>
       <p className="text-sm text-muted-foreground">
         Remplissez chaque phase : heure de début, durée, qui anime, et le contenu en rich text. Vous pouvez insérer des blocs de texte libre entre les phases.
       </p>
+      <div className="flex flex-wrap items-center gap-3 text-sm">
+        <span className="font-medium">
+          Total phases : <span className="tabular-nums">{totalMinutes}</span> min
+        </span>
+        {workshopDurationMinutes != null && workshopDurationMinutes > 0 && (
+          <>
+            <span className="text-muted-foreground">
+              (atelier : {workshopDurationMinutes} min)
+            </span>
+            {exceeds && (
+              <span className="font-medium text-destructive">
+                Dépassement : +{overflow} min
+              </span>
+            )}
+          </>
+        )}
+      </div>
       {blocks.map((block, blockIndex) => (
         <div key={block.type === 'section' ? block.id : block.id}>
           {block.type === 'richtext' ? (

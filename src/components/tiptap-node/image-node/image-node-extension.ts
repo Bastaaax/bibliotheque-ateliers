@@ -42,7 +42,7 @@ export const Image = TiptapImage.extend<ImageOptions>({
     return {
       ...this.parent?.(),
       "data-align": {
-        default: null,
+        default: "center",
       },
       showCaption: {
         default: false,

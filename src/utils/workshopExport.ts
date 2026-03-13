@@ -95,6 +95,32 @@ function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => map[c] ?? c)
 }
 
+/** HTML pour l'impression de la fiche synthèse uniquement. */
+export function getFicheSynthesePrintHtml(w: Workshop): string {
+  const content = w.fiche_synthese?.trim() || ''
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Fiche synthèse - ${escapeHtml(w.title)}</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; color: #1a1a1a; line-height: 1.5; }
+    h1 { font-size: 1.5rem; margin-bottom: 1rem; }
+    .fiche-content { margin-top: 1rem; }
+    .fiche-content p { margin: 0.5rem 0; }
+    .fiche-content ul, .fiche-content ol { margin: 0.5rem 0; padding-left: 1.5rem; }
+    @media print { body { padding: 1rem; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>${w.icon ? `<span aria-hidden>${escapeHtml(w.icon)}</span> ` : ''}Fiche synthèse – ${escapeHtml(w.title)}</h1>
+  </header>
+  <div class="fiche-content">${content || '<p><em>Aucun contenu.</em></p>'}</div>
+</body>
+</html>`
+}
+
 /** Build Word document and return as Blob. */
 export async function getWorkshopDocxBlob(w: Workshop): Promise<Blob> {
   const children: Paragraph[] = []

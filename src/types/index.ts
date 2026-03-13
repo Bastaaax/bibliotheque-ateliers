@@ -34,6 +34,8 @@ export interface Workshop {
   objectives: string[]
   /** Liens vers ressources (présentation, doc à imprimer, etc.) */
   resource_links?: WorkshopResourceLink[]
+  /** Fiche synthèse à remettre aux stagiaires (HTML) */
+  fiche_synthese?: string | null
   creator_id: string | null
   creator?: Profile
   created_at: string
@@ -125,5 +127,6 @@ export interface WorkshopFormData {
   materials: string[]
   objectives: string[]
   resource_links?: WorkshopResourceLink[]
+  fiche_synthese?: string | null
   tagIds: string[]
 }

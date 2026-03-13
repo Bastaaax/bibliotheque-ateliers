@@ -116,6 +116,39 @@
     background-color: hsl(var(--muted));
     font-weight: 600;
   }
+
+  /* Listes à puces et numérotées visibles (éditeur + vue lecture) */
+  .workshop-content-view ul,
+  .ProseMirror ul {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+    margin: 0.5rem 0;
+  }
+  .workshop-content-view ol,
+  .ProseMirror ol {
+    list-style-type: decimal;
+    padding-left: 1.5rem;
+    margin: 0.5rem 0;
+  }
+  .workshop-content-view li,
+  .ProseMirror li {
+    margin: 0.25rem 0;
+    display: list-item;
+  }
+
+  /* Images alignées : float pour texte sur colonne opposée */
+  .prose .tiptap-image[data-align="left"],
+  .workshop-content-view .tiptap-image[data-align="left"],
+  .ProseMirror .tiptap-image[data-align="left"] {
+    float: left;
+    margin: 0 1rem 0.5rem 0;
+  }
+  .prose .tiptap-image[data-align="right"],
+  .workshop-content-view .tiptap-image[data-align="right"],
+  .ProseMirror .tiptap-image[data-align="right"] {
+    float: right;
+    margin: 0 0 0.5rem 1rem;
+  }
 }
 
 @layer components {
